@@ -95,9 +95,6 @@ body::before {
   -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
           mask-image: linear-gradient(to bottom, #000 50%, transparent);
 }
-/* Al bajar, el encabezado se queda pero baja al 40% de opacidad; al subir o al pasar el cursor, vuelve a 100% */
-.site-header.oculto { opacity: .4; }
-.site-header.oculto:hover, .site-header.oculto:focus-within { opacity: 1; }
 .site-header .wrap {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding-block: 22px;

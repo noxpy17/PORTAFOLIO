@@ -43,21 +43,6 @@
       header.querySelectorAll('.nav a').forEach((a) => a.addEventListener('click', () => abrir(false)));
       window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && header.classList.contains('menu-abierto')) { abrir(false); btn.focus(); } });
     }
-    let ultimoY = window.scrollY, tic = false;
-    window.addEventListener('scroll', () => {
-      if (tic) return;
-      tic = true;
-      requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const bajando = y > ultimoY + 6, subiendo = y < ultimoY - 6;
-        if (!header.classList.contains('menu-abierto')) {
-          if (bajando && y > 160) header.classList.add('oculto');
-          else if (subiendo || y < 160) header.classList.remove('oculto');
-        }
-        if (Math.abs(y - ultimoY) > 6) ultimoY = y;
-        tic = false;
-      });
-    }, { passive: true });
   }
 
   // Respaldo CSS del hero: el halo sigue al cursor si no hay WebGL
