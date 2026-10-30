@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NOXPY · Cristian Patiño</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cristian Patiño (NOXPY), director de arte e ilustrador en Bogotá. Campañas para Andina, Puntos Colombia, Avianca Cargo y EPM con agencias como McCann y Sancho BBDO.">
+<link rel="icon" href="assets/img/simbolo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;600;700;800;900&family=Maven+Pro:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="preload" as="image" href="assets/img/portada-1920.webp" imagesrcset="assets/img/portada-1280.webp 1280w, assets/img/portada-1920.webp 1920w" imagesizes="100vw" media="(min-width: 761px)">
+<link rel="preload" as="image" href="assets/img/portada-movil.webp" media="(max-width: 760px)">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#inicio"><img src="assets/img/logo-horizontal-blanco.png" alt="NOXPY" width="467" height="128"></a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú"><span></span><span></span></button>
+    <nav class="nav" id="menu-principal" aria-label="Principal">
+      <a href="proyectos/index.html">Proyectos</a>
+      <a href="#sobre-mi">Sobre mí</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="hero" aria-labelledby="hero-titulo">
+    <picture class="hero-fondo" aria-hidden="true">
+      <source media="(max-width: 760px)" srcset="assets/img/portada-movil.webp">
+      <img src="assets/img/portada-1920.webp" srcset="assets/img/portada-1280.webp 1280w, assets/img/portada-1920.webp 1920w" sizes="100vw" alt="" width="1920" height="1011" fetchpriority="high" decoding="async">
+    </picture>
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="wrap hero-grid">
+      <div class="hero-llama" aria-hidden="true">
+        <svg viewBox="70 25 940 765" focusable="false">
+          <defs>
+            <!-- Cuerpo líquido: núcleo de luz blanca que se desplaza dentro de un azul profundo -->
+            <radialGradient id="llama-cuerpo" gradientUnits="userSpaceOnUse" cx="560" cy="520" r="620" fx="560" fy="520">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset=".16" stop-color="#d9f7ff"/>
+              <stop offset=".34" stop-color="#00edff"/>
+              <stop offset=".55" stop-color="#3b3dff"/>
+              <stop offset=".78" stop-color="#2a0a8f"/>
+              <stop offset="1" stop-color="#07061a"/>
+              <animate attributeName="cx" values="560;420;640;720;560" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              <animate attributeName="cy" values="520;620;640;360;520" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              <animate attributeName="fx" values="600;380;700;760;600" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              <animate attributeName="fy" values="560;660;600;300;560" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              <animate attributeName="r" values="620;520;700;560;620" dur="13s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+            </radialGradient>
+            <!-- Sombra interior que viaja (el azul oscuro que cruza la forma en la referencia) -->
+            <radialGradient id="llama-sombra" gradientUnits="userSpaceOnUse" cx="380" cy="300" r="380">
+              <stop offset="0" stop-color="#050a0a" stop-opacity=".85"/>
+              <stop offset="1" stop-color="#050a0a" stop-opacity="0"/>
+              <animate attributeName="cx" values="380;760;640;300;380" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              <animate attributeName="cy" values="300;260;700;520;300" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+            </radialGradient>
+            <!-- Filo de luz que gira por el borde: #df00f7 a #ff007a -->
+            <linearGradient id="llama-filo" gradientUnits="userSpaceOnUse" x1="120" y1="400" x2="1000" y2="400">
+              <stop offset="0" stop-color="#ff007a" stop-opacity="0"/>
+              <stop offset=".35" stop-color="#ff007a"/>
+              <stop offset=".5" stop-color="#df00f7"/>
+              <stop offset=".62" stop-color="#df00f7" stop-opacity="0"/>
+              <animateTransform attributeName="gradientTransform" type="rotate" values="0 540 400; 360 540 400" dur="9s" repeatCount="indefinite"/>
+            </linearGradient>
+            <!-- ENTRADA (como el estallido de la referencia): chispa → el fuego se abre desde ahí con borde en llamas -->
+            <filter id="borde-fuego" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="9" result="r"/>
+              <feDisplacementMap in="SourceGraphic" in2="r" scale="150" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+            <mask id="llama-mascara" maskUnits="userSpaceOnUse" x="-200" y="-200" width="1500" height="1300">
+              <g filter="url(#borde-fuego)">
+                <circle cx="150" cy="520" r="0" fill="#fff">
+                  <animate attributeName="r" values="0;70;1050" keyTimes="0;.28;1" begin="0.6s" dur="1.35s" fill="freeze" calcMode="spline" keySplines=".2 .8 .3 1; .55 0 .25 1"/>
+                </circle>
+              </g>
+            </mask>
+            <radialGradient id="llama-calor" gradientUnits="userSpaceOnUse" cx="200" cy="520" r="560">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset=".35" stop-color="#ffd1f0"/>
+              <stop offset=".7" stop-color="#ff007a"/>
+              <stop offset="1" stop-color="#df00f7" stop-opacity="0"/>
+              <animate attributeName="cx" values="200;620" begin="0.6s" dur="1.6s" fill="freeze" calcMode="spline" keySplines=".4 0 .2 1"/>
+              <animate attributeName="cy" values="520;300" begin="0.6s" dur="1.6s" fill="freeze" calcMode="spline" keySplines=".4 0 .2 1"/>
+            </radialGradient>
+            <clipPath id="llama-recorte"><path d="M991.91,41.51s-356.65-21.64-559.22,104.86l-130.1,99.12,82.53-168.95s-124.38,28.51-207.19,145.28c-46.96,66.23-89.65,254.27-89.65,254.27l79.18,292.08,533.37,4.69s38.34-19.79,79.76-49.98c48-34.99,93.98-97.7,119.49-152.59,43.6-93.79,51.91-244.94,51.91-244.94l-80.89,120.1-181.68,35.02,148.06-219.92,154.43-219.03Z"/></clipPath>
+            <!-- Ondulación líquida: lenta y amplia, sin saltos -->
+            <filter id="llama-fuego" x="-15%" y="-15%" width="130%" height="130%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.005" numOctaves="2" seed="7" result="ruido">
+                <animate attributeName="baseFrequency" values="0.0035 0.005; 0.0045 0.0065; 0.003 0.0055; 0.0035 0.005" dur="9s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="ruido" scale="22" xChannelSelector="R" yChannelSelector="G" result="ondulada">
+                <animate attributeName="scale" values="110;22" begin="0.6s" dur="2s" fill="freeze" calcMode="spline" keySplines=".2 .7 .3 1"/>
+              </feDisplacementMap>
+              <feGaussianBlur in="ondulada" stdDeviation="6"/>
+            </filter>
+            <filter id="llama-filo-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter>
+            <!-- Desfase RGB: franja #df00f7 a la izquierda, cian a la derecha -->
+            <filter id="llama-rgb" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+              <feOffset in="SourceAlpha" dx="-8" result="izq"/>
+              <feFlood flood-color="#df00f7" flood-opacity=".75"/>
+              <feComposite in2="izq" operator="in" result="franjaIzq"/>
+              <feOffset in="SourceAlpha" dx="8" result="der"/>
+              <feFlood flood-color="#00edff" flood-opacity=".65"/>
+              <feComposite in2="der" operator="in" result="franjaDer"/>
+              <feMerge><feMergeNode in="franjaIzq"/><feMergeNode in="franjaDer"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g filter="url(#llama-rgb)">
+            <g class="llama-capa" mask="url(#llama-mascara)" filter="url(#llama-fuego)">
+              <path fill="url(#llama-cuerpo)" d="M991.91,41.51s-356.65-21.64-559.22,104.86l-130.1,99.12,82.53-168.95s-124.38,28.51-207.19,145.28c-46.96,66.23-89.65,254.27-89.65,254.27l79.18,292.08,533.37,4.69s38.34-19.79,79.76-49.98c48-34.99,93.98-97.7,119.49-152.59,43.6-93.79,51.91-244.94,51.91-244.94l-80.89,120.1-181.68,35.02,148.06-219.92,154.43-219.03Z"/>
+              <path fill="url(#llama-sombra)" d="M991.91,41.51s-356.65-21.64-559.22,104.86l-130.1,99.12,82.53-168.95s-124.38,28.51-207.19,145.28c-46.96,66.23-89.65,254.27-89.65,254.27l79.18,292.08,533.37,4.69s38.34-19.79,79.76-49.98c48-34.99,93.98-97.7,119.49-152.59,43.6-93.79,51.91-244.94,51.91-244.94l-80.89,120.1-181.68,35.02,148.06-219.92,154.43-219.03Z"/>
+              <g clip-path="url(#llama-recorte)"><path fill="none" stroke="url(#llama-filo)" stroke-width="46" filter="url(#llama-filo-blur)" d="M991.91,41.51s-356.65-21.64-559.22,104.86l-130.1,99.12,82.53-168.95s-124.38,28.51-207.19,145.28c-46.96,66.23-89.65,254.27-89.65,254.27l79.18,292.08,533.37,4.69s38.34-19.79,79.76-49.98c48-34.99,93.98-97.7,119.49-152.59,43.6-93.79,51.91-244.94,51.91-244.94l-80.89,120.1-181.68,35.02,148.06-219.92,154.43-219.03Z"/></g>
+              <path fill="url(#llama-calor)" opacity="0" d="M991.91,41.51s-356.65-21.64-559.22,104.86l-130.1,99.12,82.53-168.95s-124.38,28.51-207.19,145.28c-46.96,66.23-89.65,254.27-89.65,254.27l79.18,292.08,533.37,4.69s38.34-19.79,79.76-49.98c48-34.99,93.98-97.7,119.49-152.59,43.6-93.79,51.91-244.94,51.91-244.94l-80.89,120.1-181.68,35.02,148.06-219.92,154.43-219.03Z">
+                <animate attributeName="opacity" values="0;1;.85;0" keyTimes="0;.2;.45;1" begin="0.6s" dur="2.1s" fill="freeze"/>
+              </path>
+            </g>
+            <!-- Chispa inicial -->
+            <circle cx="150" cy="520" r="0" fill="#ffffff">
+              <animate attributeName="r" values="0;16;10;22;0" keyTimes="0;.3;.5;.8;1" begin="0.32s" dur="0.5s" fill="freeze"/>
+            </circle>
+            <circle cx="150" cy="520" r="9" fill="#ff007a" opacity="0">
+              <animate attributeName="cx" values="150;90" begin="0.9s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="cy" values="520;300" begin="0.9s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="r" values="9;2.7" begin="0.9s" dur="1.1s" fill="freeze"/>
+              <animate attributeName="opacity" values="0;1;0" keyTimes="0;.2;1" begin="0.9s" dur="1.1s" fill="freeze"/>
+            </circle>
+            <circle cx="160" cy="500" r="7" fill="#df00f7" opacity="0">
+              <animate attributeName="cx" values="160;330" begin="1.0s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="cy" values="500;220" begin="1.0s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="r" values="7;2.1" begin="1.0s" dur="1.1s" fill="freeze"/>
+              <animate attributeName="opacity" values="0;1;0" keyTimes="0;.2;1" begin="1.0s" dur="1.1s" fill="freeze"/>
+            </circle>
+            <circle cx="140" cy="540" r="6" fill="#ff007a" opacity="0">
+              <animate attributeName="cx" values="140;60" begin="1.05s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="cy" values="540;420" begin="1.05s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="r" values="6;1.8" begin="1.05s" dur="1.1s" fill="freeze"/>
+              <animate attributeName="opacity" values="0;1;0" keyTimes="0;.2;1" begin="1.05s" dur="1.1s" fill="freeze"/>
+            </circle>
+            <circle cx="170" cy="510" r="6" fill="#00edff" opacity="0">
+              <animate attributeName="cx" values="170;520" begin="1.15s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="cy" values="510;160" begin="1.15s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="r" values="6;1.8" begin="1.15s" dur="1.1s" fill="freeze"/>
+              <animate attributeName="opacity" values="0;1;0" keyTimes="0;.2;1" begin="1.15s" dur="1.1s" fill="freeze"/>
+            </circle>
+            <circle cx="150" cy="520" r="5" fill="#ffffff" opacity="0">
+              <animate attributeName="cx" values="150;250" begin="1.1s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="cy" values="520;300" begin="1.1s" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".2 .6 .3 1"/>
+              <animate attributeName="r" values="5;1.5" begin="1.1s" dur="1.1s" fill="freeze"/>
+              <animate attributeName="opacity" values="0;1;0" keyTimes="0;.2;1" begin="1.1s" dur="1.1s" fill="freeze"/>
+            </circle>
+            <g clip-path="url(#llama-recorte)"><polygon class="llama-n" fill="#ffffff" points="166.45 364.47 301.06 364.47 301.06 605.83 497.16 364.47 685.72 364.47 685.72 771.76 550.53 771.76 550.53 526.34 350.95 771.76 166.45 771.76 166.45 364.47"/></g>
+          </g>
+        </svg>
+      </div>
+      <p class="label hero-eyebrow" data-intro>Art direction · Illustration · Motion</p>
+      <h1 class="titulo" id="hero-titulo" data-split>
+        <span class="linea">Creative by nature.</span>
+        <span class="linea linea--luz">Rebel</span>
+        <span class="linea linea--luz">by design.</span>
+      </h1>
+      <p class="manifiesto" data-intro>
+        <span class="sr-only">Pensamos antes de producir. Exploramos antes de resolver. Arriesgamos con intención.</span>
+        <span class="m-tipeo" aria-hidden="true" data-lineas="Pensamos antes de producir.|Exploramos antes de resolver.|Arriesgamos con intención."><span class="m-texto">Pensamos antes de producir.</span><span class="caret"></span></span>
+      </p>
+      <div class="hero-foot" data-intro>
+        <p class="label">Cristian Patiño · NOXPY · Bogotá</p>
+        <div class="actions">
+          <a class="btn btn--solid" href="#destacados">Ver trabajo ↓</a>
+          <a class="btn" href="#contacto">Hablemos</a>
+        </div>
+      </div>
+    </div>
+    <button class="intro-saltar label" type="button" hidden>Saltar intro</button>
+  </section>
+
+
+  <section class="clients" aria-label="Agencias con las que he trabajado">
+    <div class="wrap">
+      <span class="label">Agencias con las que he trabajado</span>
+      <ul>
+        <li>D Strategy</li>
+        <li>McCann</li>
+        <li>Sancho BBDO</li>
+        <li>Publicis Groupe</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="featured" id="destacados" aria-labelledby="destacados-titulo">
+    <div class="wrap featured-head">
+      <h2 class="label" id="destacados-titulo">Proyectos destacados</h2>
+      <a class="label" href="proyectos/index.html">Ver todos los proyectos →</a>
+    </div>
+    <div class="feature-stack">
+      <article class="feature">
+        <div class="folder">
+          <span class="folder-tab" aria-hidden="true"><b>01</b><span>Andina Refajo</span><i>2025</i></span>
+        <a class="feature-inner" href="https://www.behance.net/gallery/218897783/Andina-Refajo-Nos-Juntamos-para-que-te-juntes" target="_blank" rel="noopener">
+          <div class="feature-media"><img src="assets/img/andina-refajo.webp" alt="Grupo de amigos celebrando con Refajo Andina en una sala de bolos" width="808" height="632" loading="lazy"></div>
+          <div class="feature-copy wrap">
+            <p class="label feature-index"><span>01</span> / 04 · Destacado</p>
+            <h3 class="titulo feature-title">Nos juntamos para que te juntes</h3>
+            <div class="feature-meta">
+              <span class="label">Andina Refajo</span>
+              <span class="label">2025</span>
+              <span class="label">Campaña</span>
+              <span class="btn btn--solid feature-cta">Ver proyecto ↗</span>
+            </div>
+          </div>
+        </a>
+        </div>
+      </article>
+      <article class="feature">
+        <div class="folder">
+          <span class="folder-tab" aria-hidden="true"><b>02</b><span>Marca de ropa</span><i>2024</i></span>
+        <a class="feature-inner" href="https://www.behance.net/gallery/119048617/GATOZORRO" target="_blank" rel="noopener">
+          <div class="feature-media"><img src="assets/img/gatozorro-portada.webp" alt="Modelo con chaqueta de patrón GATOZORRO bajo el logotipo de la marca" width="1600" height="1027" loading="lazy"></div>
+          <div class="feature-copy wrap">
+            <p class="label feature-index"><span>02</span> / 04 · Destacado</p>
+            <h3 class="titulo feature-title">GATOZORRO</h3>
+            <div class="feature-meta">
+              <span class="label">Marca de ropa</span>
+              <span class="label">2024</span>
+              <span class="label">Branding · Ilustración</span>
+              <span class="btn btn--solid feature-cta">Ver proyecto ↗</span>
+            </div>
+          </div>
+        </a>
+        </div>
+      </article>
+      <article class="feature">
+        <div class="folder">
+          <span class="folder-tab" aria-hidden="true"><b>03</b><span>Barbería, Bogotá</span><i>2022</i></span>
+        <a class="feature-inner" href="https://www.behance.net/gallery/147572203/Dapper-Men-Barbers" target="_blank" rel="noopener">
+          <div class="feature-media"><img src="assets/img/dapper-portada.webp" alt="Logotipo de Dapper Men Barbers en letras de neón sobre un barbero tatuado" width="1600" height="1027" loading="lazy"></div>
+          <div class="feature-copy wrap">
+            <p class="label feature-index"><span>03</span> / 04 · Destacado</p>
+            <h3 class="titulo feature-title">Dapper Men Barbers</h3>
+            <div class="feature-meta">
+              <span class="label">Barbería, Bogotá</span>
+              <span class="label">2022</span>
+              <span class="label">Identidad</span>
+              <span class="btn btn--solid feature-cta">Ver proyecto ↗</span>
+            </div>
+          </div>
+        </a>
+        </div>
+      </article>
+      <article class="feature">
+        <div class="folder">
+          <span class="folder-tab" aria-hidden="true"><b>04</b><span>Andina × Millonarios</span><i>2025</i></span>
+        <a class="feature-inner" href="https://www.behance.net/gallery/220245487/Andina-Millonarios-Puntos-Azules" target="_blank" rel="noopener">
+          <div class="feature-media"><img src="assets/img/andina-millonarios.webp" alt="Jugadores de Millonarios con la camiseta blanca patrocinada por Andina" width="808" height="632" loading="lazy"></div>
+          <div class="feature-copy wrap">
+            <p class="label feature-index"><span>04</span> / 04 · Destacado</p>
+            <h3 class="titulo feature-title">Puntos Azules</h3>
+            <div class="feature-meta">
+              <span class="label">Andina × Millonarios</span>
+              <span class="label">2025</span>
+              <span class="label">Campaña</span>
+              <span class="btn btn--solid feature-cta">Ver proyecto ↗</span>
+            </div>
+          </div>
+        </a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="proyectos">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="halo" aria-hidden="true"></div>
+        <h2 class="titulo">Todos los proyectos</h2>
+        <div class="filters" role="group" aria-label="Filtrar proyectos">
+          <button class="chip" type="button" data-filter="todos" aria-pressed="true">Todos</button>
+          <button class="chip" type="button" data-filter="campana" aria-pressed="false">Campañas</button>
+          <button class="chip" type="button" data-filter="branding" aria-pressed="false">Branding</button>
+          <button class="chip" type="button" data-filter="ilustracion" aria-pressed="false">Ilustración</button>
+          <button class="chip" type="button" data-filter="direccion" aria-pressed="false">Dirección creativa</button>
+        </div>
+      </div>
+
+      <ul class="work-grid">
+        <li class="card" data-cat="campana direccion">
+          <a href="https://www.behance.net/gallery/218897783/Andina-Refajo-Nos-Juntamos-para-que-te-juntes" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>01</b><span>Andina Refajo</span><i>2025</i></span>
+              <figure><img src="assets/img/andina-refajo.webp" alt="Grupo de amigos celebrando con Refajo Andina en una sala de bolos" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Nos juntamos para que te juntes <span class="arrow">↗</span></h3>
+              <span class="label year">2025</span>
+              <span class="label tags">Andina Refajo · Campaña</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="campana branding">
+          <a href="https://www.behance.net/gallery/233699121/Andina-Feria-de-Cali-Edicion-Especial" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>02</b><span>Andina</span><i>2025</i></span>
+              <figure><img src="assets/img/andina-feria-cali.webp" alt="Latas de edición especial Andina para la Feria de Cali sobre fondo azul" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Feria de Cali, edición especial <span class="arrow">↗</span></h3>
+              <span class="label year">2025</span>
+              <span class="label tags">Andina · Empaque e ilustración</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="campana">
+          <a href="https://www.behance.net/gallery/220245487/Andina-Millonarios-Puntos-Azules" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>03</b><span>Andina × Millonarios</span><i>2025</i></span>
+              <figure><img src="assets/img/andina-millonarios.webp" alt="Jugadores de Millonarios con la camiseta blanca patrocinada por Andina" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Puntos Azules <span class="arrow">↗</span></h3>
+              <span class="label year">2025</span>
+              <span class="label tags">Andina × Millonarios · Campaña</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="branding ilustracion direccion">
+          <a href="https://www.behance.net/gallery/119048617/GATOZORRO" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>04</b><span>Marca de ropa</span><i>2024</i></span>
+              <figure><img src="assets/img/gatozorro-01.webp" alt="Modelo con chaqueta de patrón ilustrado de GATOZORRO" width="1600" height="1027" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">GATOZORRO <span class="arrow">↗</span></h3>
+              <span class="label year">2024</span>
+              <span class="label tags">Marca de ropa · Branding e ilustración</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="campana direccion">
+          <a href="https://www.behance.net/gallery/185301681/Clouds-Avianca-Cargo" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>05</b><span>Avianca Cargo</span><i>2024</i></span>
+              <figure><img src="assets/img/avianca-cargo.webp" alt="Nube con forma de animal sobre palmeras y una mano que la señala" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Clouds <span class="arrow">↗</span></h3>
+              <span class="label year">2024</span>
+              <span class="label tags">Avianca Cargo · Dirección de arte</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="direccion">
+          <a href="https://www.youtube.com/watch?v=Kd15JfVSAz0" target="_blank" rel="noopener" data-video="Kd15JfVSAz0" data-video-titulo="120 · Naiza">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>06</b><span>Naiza</span><i>2023</i></span>
+              <figure><img src="assets/img/naiza-120.webp" alt="Portada del álbum 120 de Naiza, figura iluminada en violeta" width="1600" height="1027" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">120 <span class="arrow">↗</span></h3>
+              <span class="label year">2023</span>
+              <span class="label tags">Naiza · Lanzamiento de álbum</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="campana">
+          <a href="https://www.behance.net/gallery/177823559/Mueve-tus-Puntos-Puntos-Colombia" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>07</b><span>Puntos Colombia</span><i>2023</i></span>
+              <figure><img src="assets/img/puntos-colombia.webp" alt="Pareja comiendo pizza junto a un food truck con letrero de neón" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Mueve tus Puntos <span class="arrow">↗</span></h3>
+              <span class="label year">2023</span>
+              <span class="label tags">Puntos Colombia · Campaña</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="ilustracion">
+          <a href="https://www.behance.net/gallery/179843493/La-Liga-EPM" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>08</b><span>EPM</span><i>2023</i></span>
+              <figure><img src="assets/img/la-liga-epm.webp" alt="Páginas de cómic en blanco y negro de La Liga EPM" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">La Liga <span class="arrow">↗</span></h3>
+              <span class="label year">2023</span>
+              <span class="label tags">EPM · Cómic</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="branding">
+          <a href="https://www.behance.net/gallery/147572203/Dapper-Men-Barbers" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>09</b><span>Barbería</span><i>2022</i></span>
+              <figure><img src="assets/img/dapper.webp" alt="Logotipo de Dapper Men Barbers en letras de neón sobre un barbero tatuado" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Dapper Men Barbers <span class="arrow">↗</span></h3>
+              <span class="label year">2022</span>
+              <span class="label tags">Barbería · Identidad</span>
+            </div>
+          </a>
+        </li>
+        <li class="card" data-cat="ilustracion">
+          <a href="https://www.behance.net/gallery/47842055/Year-of-the-rooster-2017-CreativeMornings-Bog" target="_blank" rel="noopener">
+            <div class="card-folder">
+              <span class="folder-tab" aria-hidden="true"><b>10</b><span>CreativeMornings Bogotá</span><i>2017</i></span>
+              <figure><img src="assets/img/year-of-the-rooster.webp" alt="Ilustración de gallos en negro sobre fondo magenta, Year of the Rooster 2017" width="808" height="632" loading="lazy"></figure>
+            </div>
+            <div class="card-meta">
+              <h3 class="titulo">Year of the Rooster <span class="arrow">↗</span></h3>
+              <span class="label year">2017</span>
+              <span class="label tags">CreativeMornings Bogotá · Ilustración</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+      <div class="more">
+        <a class="btn" href="proyectos/index.html">Abrir todos los proyectos →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section about" id="sobre-mi">
+    <div class="wrap">
+      <div class="about-head">
+        <p class="label">Quién soy</p>
+        <h2 class="titulo">Cristian Patiño</h2>
+      </div>
+      <div class="about-body">
+        <p>Soy director de arte e ilustrador en Bogotá. Trabajo con agencias y marcas en campañas, empaques e identidades donde la imagen tiene que sentirse antes de entenderse.</p>
+        <p>Fuera del estudio corro, dibujo, visito galerías y escucho podcasts en la tarde. Ese tiempo es de donde salen la mayoría de las ideas.</p>
+        <p class="label services-titulo">Qué puedo hacer por ti</p>
+        <ul class="services">
+          <li><b>Dirección de arte</b><span>Campañas, piezas para redes, rodajes y fotografía</span></li>
+          <li><b>Branding</b><span>Logotipos, sistemas visuales y empaques</span></li>
+          <li><b>Ilustración</b><span>Editorial, cómic, patrones y personajes</span></li>
+          <li><b>Motion graphics</b><span>Animación para campañas y lanzamientos</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contacto">
+    <div class="wrap">
+      <p class="label">Contacto</p>
+      <h2 class="titulo"><span class="ligero">¿Tienes un proyecto?</span> <em>Hablemos.</em></h2>
+      <div class="contact-lines">
+        <div class="contact-line">
+          <a class="value" href="mailto:noxpy17@gmail.com">noxpy17@gmail.com</a>
+          <div class="row"><button class="btn" type="button" data-copy="noxpy17@gmail.com">Copiar</button></div>
+        </div>
+        <div class="contact-line">
+          <a class="value" href="https://wa.me/573133138633" target="_blank" rel="noopener">+57 313 313 8633</a>
+          <div class="row">
+            <a class="btn" href="https://wa.me/573133138633" target="_blank" rel="noopener">WhatsApp</a>
+            <button class="btn" type="button" data-copy="+573133138633">Copiar</button>
+          </div>
+        </div>
+      </div>
+      <ul class="redes" aria-label="Redes sociales">
+        <li><a href="https://www.behance.net/NOXPY" target="_blank" rel="noopener"><span class="red-nombre">Behance</span><span class="red-usuario">/NOXPY</span><span class="red-flecha" aria-hidden="true">↗</span></a></li>
+        <li><a href="https://www.instagram.com/noxpy/" target="_blank" rel="noopener"><span class="red-nombre">Instagram</span><span class="red-usuario">@noxpy</span><span class="red-flecha" aria-hidden="true">↗</span></a></li>
+        <li><a href="https://www.linkedin.com/in/cristian-pati%C3%B1o-923b6199/" target="_blank" rel="noopener"><span class="red-nombre">LinkedIn</span><span class="red-usuario">Cristian Patiño</span><span class="red-flecha" aria-hidden="true">↗</span></a></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<div class="video-modal" hidden role="dialog" aria-modal="true" aria-label="Video del proyecto">
+  <div class="video-caja">
+    <div class="video-cabeza">
+      <p class="label video-titulo"></p>
+      <div class="video-acciones">
+        <a class="btn video-yt" href="#" target="_blank" rel="noopener">Ver en YouTube ↗</a>
+        <button class="btn video-cerrar" type="button">Cerrar</button>
+      </div>
+    </div>
+    <div class="video-marco"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span class="label">© <span data-year>2026</span> NOXPY · Bogotá, Colombia</span>
+    <ul class="label">
+      <li><a href="https://www.behance.net/NOXPY" target="_blank" rel="noopener">Behance</a></li>
+      <li><a href="https://www.instagram.com/noxpy/" target="_blank" rel="noopener">Instagram</a></li>
+      <li><a href="https://www.linkedin.com/in/cristian-pati%C3%B1o-923b6199/" target="_blank" rel="noopener">LinkedIn</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script src="assets/vendor/anime.umd.min.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/intro.js"></script>
+</body>
+</html>
