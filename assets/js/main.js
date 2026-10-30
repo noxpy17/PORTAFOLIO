@@ -4,33 +4,31 @@
   // Ritmo del brandbook: ease-in-out, 0.4 a 0.8 s
   const EASE = 'inOut(3)';
 
-  // Rendimiento: todo lo que se mueve en bucle usa solo transform y opacity (los hace la GPU).
-  // Nada de máscaras, filtros o fondos que cambien en cada cuadro.
-
-  // Grano: una textura de ruido generada una vez; la animación de salto va en CSS
-  const grainTargets = document.querySelectorAll('.grain, .hero-grain');
-  if (grainTargets.length) {
+  // Grano: textura de ruido generada una vez y desplazada a saltos
+  const grain = document.querySelector('.grain');
+  if (grain) {
     const c = document.createElement('canvas');
-    c.width = c.height = 160;
+    c.width = c.height = 180;
     const ctx = c.getContext('2d');
-    const img = ctx.createImageData(160, 160);
+    const img = ctx.createImageData(180, 180);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = Math.random() * 255;
       img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
       img.data[i + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
-    const url = `url(${c.toDataURL()})`;
-    grainTargets.forEach((g) => { g.style.backgroundImage = url; });
+    grain.style.backgroundImage = `url(${c.toDataURL()})`;
+    document.querySelectorAll('.hero-grain').forEach((g) => { g.style.backgroundImage = grain.style.backgroundImage; });
+    if (!reduceMotion) {
+      setInterval(() => {
+        grain.style.backgroundPosition = `${Math.random() * 180}px ${Math.random() * 180}px`;
+      }, 90);
+    }
   }
 
-  // Con movimiento reducido: la llama del logo aparece completa y quieta
-  if (reduceMotion) {
-    document.querySelectorAll('.hero-llama svg').forEach((s) => {
-      if (s.setCurrentTime) s.setCurrentTime(5);
-      if (s.pauseAnimations) s.pauseAnimations();
-    });
-  }
+  // El degradado de la llama (SVG animado) se detiene si la persona pidió menos movimiento
+  // Con movimiento reducido: se salta la entrada (la llama queda completa) y todo queda quieto
+  if (reduceMotion) document.querySelectorAll('.hero-llama svg').forEach((s) => { if (s.setCurrentTime) s.setCurrentTime(5); if (s.pauseAnimations) s.pauseAnimations(); });
 
   // Encabezado: baja al 40% de opacidad al bajar, vuelve al subir; menú acordeón en celular
   const header = document.querySelector('.site-header');
@@ -45,20 +43,16 @@
       header.querySelectorAll('.nav a').forEach((a) => a.addEventListener('click', () => abrir(false)));
       window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && header.classList.contains('menu-abierto')) { abrir(false); btn.focus(); } });
     }
-    let ultimoY = window.scrollY, tic = false, quieto = 0;
-    const root = document.documentElement;
+    let ultimoY = window.scrollY, tic = false;
     window.addEventListener('scroll', () => {
-      // Mientras hay scroll, el grano deja de saltar (no se nota y libera la GPU)
-      root.classList.add('en-scroll');
-      clearTimeout(quieto);
-      quieto = setTimeout(() => root.classList.remove('en-scroll'), 180);
       if (tic) return;
       tic = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
+        const bajando = y > ultimoY + 6, subiendo = y < ultimoY - 6;
         if (!header.classList.contains('menu-abierto')) {
-          if (y > ultimoY + 6 && y > 160) header.classList.add('oculto');
-          else if (y < ultimoY - 6 || y < 160) header.classList.remove('oculto');
+          if (bajando && y > 160) header.classList.add('oculto');
+          else if (subiendo || y < 160) header.classList.remove('oculto');
         }
         if (Math.abs(y - ultimoY) > 6) ultimoY = y;
         tic = false;
@@ -66,29 +60,101 @@
     }, { passive: true });
   }
 
-  // Todos los proyectos: la tarjeta entra con un fundido y el color sube de abajo hacia arriba.
-  // El color es una cortina en blanco y negro que se desliza hacia arriba (solo transform).
+  // Respaldo CSS del hero: el halo sigue al cursor si no hay WebGL
+  const hero = document.querySelector('.hero');
+  if (hero && !reduceMotion) {
+    hero.addEventListener('pointermove', (e) => {
+      if (hero.classList.contains('has-webgl')) return;
+      const r = hero.getBoundingClientRect();
+      hero.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+      hero.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+    });
+  }
+
+  // Linterna sobre el sujeto de la portada: sigue al cursor con inercia; sin cursor,
+  // recorre el rostro sola, despacio, como alguien que busca con una luz suave
+  const sujeto = document.querySelector('.hero-sujeto');
+  if (sujeto && hero && !reduceMotion) {
+    let fx = 50, fy = 28, tx = 50, ty = 28, ultimo = -1e9, t0 = performance.now();
+    const fino = window.matchMedia('(pointer: fine)').matches;
+    hero.addEventListener('pointermove', (e) => {
+      if (!fino) return;
+      const r = sujeto.getBoundingClientRect();
+      tx = Math.min(Math.max(((e.clientX - r.left) / r.width) * 100, -10), 110);
+      ty = Math.min(Math.max(((e.clientY - r.top) / r.height) * 100, -10), 110);
+      ultimo = performance.now();
+    });
+    const luz = (now) => {
+      if (now - ultimo > 2500) {
+        const t = (now - t0) / 1000;
+        tx = 50 + Math.sin(t * 0.45) * 16;
+        ty = 30 + Math.sin(t * 0.31 + 1.2) * 10;
+      }
+      fx += (tx - fx) * 0.07;
+      fy += (ty - fy) * 0.07;
+      // La escena WebGL lee la linterna desde aquí (0..1 dentro del sujeto)
+      window.__noxpyFlash = { x: fx / 100, y: fy / 100 };
+      // El óvalo mide 0.95 del ancho del sujeto; se centra en el punto de luz
+      const w = sujeto.clientWidth, h = sujeto.clientHeight, lw = w * 0.95;
+      sujeto.style.setProperty('--lw', `${lw.toFixed(0)}px`);
+      sujeto.style.setProperty('--lx', `${(fx / 100 * w - lw / 2).toFixed(1)}px`);
+      sujeto.style.setProperty('--ly', `${(fy / 100 * h - lw / 2).toFixed(1)}px`);
+      const r = hero.getBoundingClientRect();
+      if (r.bottom > 0 && !document.hidden) requestAnimationFrame(luz);
+      else setTimeout(() => requestAnimationFrame(luz), 400);
+    };
+    requestAnimationFrame(luz);
+  }
+
+  // Linterna en las fotos marcadas (Sobre mí)
+  if (!reduceMotion) {
+    document.querySelectorAll('.linterna').forEach((fig) => {
+      const img = fig.querySelector('img');
+      fig.addEventListener('pointermove', (e) => {
+        const r = fig.getBoundingClientRect();
+        img.style.setProperty('--fx', `${(((e.clientX - r.left) / r.width) * 100).toFixed(1)}%`);
+        img.style.setProperty('--fy', `${(((e.clientY - r.top) / r.height) * 100).toFixed(1)}%`);
+      });
+    });
+  }
+
+  // Revelado al hacer scroll: imágenes con máscara y destello de halo en cada sección
   if (A && 'IntersectionObserver' in window) {
+    const seen = new WeakSet();
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        io.unobserve(entry.target);
         const el = entry.target;
+        if (!entry.isIntersecting || seen.has(el)) return;
+        seen.add(el);
+        io.unobserve(el);
         if (el.matches('.card figure')) {
+          // La tarjeta entra con un fundido de opacidad y sube un poco
           const card = el.closest('.card');
-          A.animate(card, {
-            opacity: [0, 1], translateY: [28, 0], duration: 1100, ease: 'inOut(2)',
-            onComplete: () => { card.style.opacity = ''; card.style.transform = ''; },
-          });
-          const cortina = el.querySelector('.card-bn');
-          if (cortina) {
-            requestAnimationFrame(() => cortina.classList.add('se-va'));
-            cortina.addEventListener('transitionend', () => {
-              cortina.remove();
-              const folder = el.closest('.card-folder');
-              if (folder) folder.style.setProperty('--p', '1');
-            }, { once: true });
+          if (card) {
+            A.animate(card, {
+              opacity: [0, 1], translateY: [28, 0], duration: 1100, ease: 'inOut(2)',
+              onComplete: () => { card.style.opacity = ''; card.style.transform = ''; },
+            });
           }
+          // Carpeta: el color sube despacio desde abajo sobre la versión en blanco y negro
+          const img = el.querySelector('img:not(.card-bn)');
+          const folder = el.closest('.card-folder');
+          const color = { r: -0 };
+          A.animate(color, {
+            r: [0, 135], duration: 2200, ease: 'inOut(2)',
+            onUpdate: () => { img.style.setProperty('--rev', `${color.r.toFixed(1)}%`); },
+            onComplete: () => {
+              if (folder) folder.style.setProperty('--p', '1');
+              const bn = el.querySelector('.card-bn');
+              if (bn) bn.remove();
+            },
+          });
+        } else if (el.matches('.gallery figure, .case-cover')) {
+          const img = el.querySelector('img');
+          A.animate(el, { clipPath: ['inset(5% 2.5% 5% 2.5%)', 'inset(0% 0% 0% 0%)'], opacity: [0.35, 1], duration: 1100, ease: 'inOut(2)' });
+          if (img) A.animate(img, { scale: [1.06, 1], duration: 1400, ease: 'inOut(2)', onComplete: () => { img.style.transform = ''; } });
+        } else if (el.matches('.about-foto')) {
+          el.classList.remove('por-revelar');
         } else if (el.matches('.halo')) {
           A.animate(el, { opacity: [0, 0.9, 0], scale: [0.8, 1.15], duration: 1600, ease: EASE });
         }
@@ -97,40 +163,36 @@
 
     // Solo lo que todavía no está en pantalla; lo visible al cargar se queda quieto
     const fold = window.innerHeight;
-    document.querySelectorAll('.card figure, .halo').forEach((el) => {
+    document.querySelectorAll('.card figure, .gallery figure, .case-cover, .halo, .about-foto').forEach((el) => {
       if (el.getBoundingClientRect().top <= fold) return;
       if (el.matches('.card figure')) {
-        const src = el.querySelector('img');
-        const cortina = document.createElement('div');
-        cortina.className = 'card-bn';
-        cortina.setAttribute('aria-hidden', 'true');
-        const bn = src.cloneNode();
+        const img = el.querySelector('img');
+        const bn = img.cloneNode();
+        bn.className = 'card-bn';
         bn.alt = '';
-        bn.removeAttribute('loading');
-        cortina.append(bn);
-        el.append(cortina);
-        el.closest('.card').style.opacity = '0';
+        bn.setAttribute('aria-hidden', 'true');
+        el.prepend(bn);
+        img.style.setProperty('--rev', '0%');
+        const card = el.closest('.card');
+        if (card) card.style.opacity = '0';
       }
+      if (el.matches('.about-foto')) el.classList.add('por-revelar');
       io.observe(el);
     });
   }
 
-  // Destacados: carpetas apiladas; una "linterna" abre la luz sobre la imagen con el scroll
+  // Destacados: el revelado sigue al scroll (suavizado), con paralaje y apilado
   const features = [...document.querySelectorAll('.feature')];
   if (features.length) {
     const clamp = (v) => Math.min(Math.max(v, 0), 1);
     const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2); // ease-in-out
 
-    // Sombra que cae sobre la carpeta que queda debajo, y la oscuridad con el hueco de la linterna
+    // Sombra que cae sobre el proyecto que queda debajo
     features.forEach((f) => {
       const shade = document.createElement('div');
       shade.className = 'feature-shade';
       shade.setAttribute('aria-hidden', 'true');
       f.querySelector('.feature-inner').append(shade);
-      const oscuridad = document.createElement('div');
-      oscuridad.className = 'feature-oscuridad';
-      oscuridad.setAttribute('aria-hidden', 'true');
-      f.querySelector('.feature-media').append(oscuridad);
     });
 
     // Título letra por letra y datos: entran cuando el proyecto ya está casi asentado
@@ -180,45 +242,40 @@
     if (!reduceMotion) {
       const stack = document.querySelector('.feature-stack');
       const parts = features.map((f) => ({
-        folder: f.querySelector('.folder'),
+        inner: f.querySelector('.folder'),
+        media: f.querySelector('.feature-media'),
         img: f.querySelector('.feature-media img'),
-        oscuridad: f.querySelector('.feature-oscuridad'),
         copy: f.querySelector('.feature-copy'),
         shade: f.querySelector('.feature-shade'),
-        last: '',
+        e: -1, c: -1, // valores suavizados (entrada y cubierta)
       }));
 
-      const apply = (p, e0, c0, d, hasNext) => {
-        const e = suave(e0);
+      const apply = (p, hasNext) => {
+        const e = suave(p.e);
         const open = 1 - e;
-        // Linterna: el hueco de luz entra por la esquina inferior izquierda y crece hasta llenar
-        // la imagen. La capa oscura mide 3 veces la imagen; se mueve y escala (solo transform).
+        // Revelado: una linterna entra por la esquina inferior y abre la luz sobre la imagen
         if (open > 0.002) {
-          const x = 22 + e * 33, y = 96 - e * 52;          // centro del hueco, en % de la imagen
-          const s = 0.18 + e * e * 4.2;                      // tamaño del hueco
-          p.oscuridad.style.opacity = '1';
-          p.oscuridad.style.transform = `translate3d(${((x - 50) / 3).toFixed(2)}%, ${((y - 50) / 3).toFixed(2)}%, 0) scale(${s.toFixed(3)})`;
-        } else if (p.oscuridad.style.opacity !== '0') {
-          p.oscuridad.style.opacity = '0';
+          p.media.style.setProperty('--lr', `${(e * 165).toFixed(1)}%`);
+          p.media.style.setProperty('--lx', `${(22 + e * 33).toFixed(1)}%`);
+          p.media.style.setProperty('--ly', `${(96 - e * 52).toFixed(1)}%`);
+        } else {
+          p.media.style.setProperty('--lr', '165%');
+          p.media.style.setProperty('--lx', '55%');
+          p.media.style.setProperty('--ly', '44%');
         }
         // Paralaje: la imagen viaja más lento que la página y sigue derivando mientras está cubierta
-        p.img.style.transform = `translate3d(0, ${d.toFixed(2)}%, 0) scale(${(1.2 - e * 0.1).toFixed(4)})`;
+        p.img.style.transform = `translate3d(0, ${p.d.toFixed(2)}%, 0) scale(${(1.2 - e * 0.1).toFixed(4)})`;
         // El texto llega un poco después que la imagen: profundidad
-        p.copy.style.transform = `translate3d(0, ${(open * 90 - c0 * 40).toFixed(1)}px, 0)`;
-        p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - c0 * 2.2), 0).toFixed(3);
-        // Salida: la siguiente carpeta la cubre; esta se aleja y cae en sombra
+        p.copy.style.transform = `translate3d(0, ${(open * 90 - p.c * 40).toFixed(1)}px, 0)`;
+        p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - p.c * 2.2), 0).toFixed(3);
+        // Salida: el siguiente lo cubre; este se aleja, se redondea y cae en sombra
         if (hasNext) {
-          const c = suave(c0);
-          p.folder.style.transform = c > 0.001 ? `translate3d(0, ${(-c * 3).toFixed(2)}%, 0) scale(${(1 - c * 0.1).toFixed(4)})` : '';
+          const c = suave(p.c);
+          p.inner.style.transform = c > 0.001 ? `translate3d(0, ${(-c * 3).toFixed(2)}%, 0) scale(${(1 - c * 0.1).toFixed(4)})` : '';
           p.shade.style.opacity = (c * 0.8).toFixed(3);
         }
-        // La línea de la pestaña y su apagado (variables heredadas por la pestaña, que es pequeña)
-        const key = `${e.toFixed(2)}|${c0.toFixed(2)}`;
-        if (key !== p.last) {
-          p.last = key;
-          p.folder.style.setProperty('--p', e.toFixed(2));
-          p.folder.style.setProperty('--c', c0.toFixed(2));
-        }
+        p.inner.style.setProperty('--p', e.toFixed(3));
+        p.inner.style.setProperty('--c', p.c.toFixed(3));
       };
 
       let raf = 0;
@@ -228,17 +285,21 @@
         const stackBottom = stack.getBoundingClientRect().bottom;
         let moving = false;
         parts.forEach((p, i) => {
-          const e = clamp(1 - rects[i].top / vh);
+          const te = clamp(1 - rects[i].top / vh);
           const next = rects[i + 1];
-          // La última carpeta solo empieza a "salir" cuando el bloque de destacados termina
-          const c = next ? clamp(1 - next.top / vh) : clamp((vh - stackBottom) / vh);
-          // La geometría sigue el scroll exacto; solo el paralaje de la imagen lleva inercia
-          const td = (1 - e) * -8 + c * 4;
+          // El último destacado solo empieza a "salir" cuando el bloque de destacados termina
+          const tc = next ? clamp(1 - next.top / vh) : clamp((vh - stackBottom) / vh);
+          // La geometría (recorte, escala, sombra) sigue el scroll exacto: así nunca se
+          // desfasa del bloque. Solo el paralaje de la imagen lleva inercia.
+          p.e = te;
+          p.c = tc;
+          const td = (1 - te) * -8 + tc * 4;
           if (p.d === undefined) p.d = td;
           p.d += (td - p.d) * 0.16;
           if (Math.abs(td - p.d) > 0.01) moving = true;
-          if (rects[i].top > vh * 1.1 || rects[i].bottom < -vh * 0.1) return;   // fuera de pantalla: no se toca
-          apply(p, e, c, p.d, !!next);
+          // Lo que está lejos de la pantalla no se toca
+          if (rects[i].top > vh * 1.1 || rects[i].bottom < -vh * 0.1) return;
+          apply(p, !!next);
         });
         raf = moving ? requestAnimationFrame(frame) : 0;
       };

@@ -9,7 +9,7 @@
 <link rel="icon" href="assets/img/simbolo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;600;700;800;900&family=Maven+Pro:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;600;700;800;900&family=Maven+Pro:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="assets/css/styles.css">
 <link rel="preload" as="image" href="assets/img/portada-1920.webp" imagesrcset="assets/img/portada-1280.webp 1280w, assets/img/portada-1920.webp 1920w" imagesizes="100vw" media="(min-width: 761px)">
 <link rel="preload" as="image" href="assets/img/portada-movil.webp" media="(max-width: 760px)">
@@ -92,7 +92,9 @@
             <clipPath id="llama-recorte"><path d="M991.91,41.51s-356.65-21.64-559.22,104.86l-130.1,99.12,82.53-168.95s-124.38,28.51-207.19,145.28c-46.96,66.23-89.65,254.27-89.65,254.27l79.18,292.08,533.37,4.69s38.34-19.79,79.76-49.98c48-34.99,93.98-97.7,119.49-152.59,43.6-93.79,51.91-244.94,51.91-244.94l-80.89,120.1-181.68,35.02,148.06-219.92,154.43-219.03Z"/></clipPath>
             <!-- Ondulación líquida: lenta y amplia, sin saltos -->
             <filter id="llama-fuego" x="-15%" y="-15%" width="130%" height="130%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.005" numOctaves="2" seed="7" result="ruido"/>
+              <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.005" numOctaves="2" seed="7" result="ruido">
+                <animate attributeName="baseFrequency" values="0.0035 0.005; 0.0045 0.0065; 0.003 0.0055; 0.0035 0.005" dur="9s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1"/>
+              </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="ruido" scale="22" xChannelSelector="R" yChannelSelector="G" result="ondulada">
                 <animate attributeName="scale" values="110;22" begin="0.6s" dur="2s" fill="freeze" calcMode="spline" keySplines=".2 .7 .3 1"/>
               </feDisplacementMap>
@@ -175,6 +177,7 @@
         </div>
       </div>
     </div>
+    <button class="intro-saltar label" type="button" hidden>Saltar intro</button>
   </section>
 
 
@@ -200,7 +203,7 @@
         <div class="folder">
           <span class="folder-tab" aria-hidden="true"><b>01</b><span>Andina Refajo</span><i>2025</i></span>
         <a class="feature-inner" href="https://www.behance.net/gallery/218897783/Andina-Refajo-Nos-Juntamos-para-que-te-juntes" target="_blank" rel="noopener">
-          <div class="feature-media"><img decoding="async" src="assets/img/andina-refajo.webp" alt="Grupo de amigos celebrando con Refajo Andina en una sala de bolos" width="808" height="632" loading="lazy"></div>
+          <div class="feature-media"><img src="assets/img/andina-refajo.webp" alt="Grupo de amigos celebrando con Refajo Andina en una sala de bolos" width="808" height="632" loading="lazy"></div>
           <div class="feature-copy wrap">
             <p class="label feature-index"><span>01</span> / 04 · Destacado</p>
             <h3 class="titulo feature-title">Nos juntamos para que te juntes</h3>
@@ -218,7 +221,7 @@
         <div class="folder">
           <span class="folder-tab" aria-hidden="true"><b>02</b><span>Marca de ropa</span><i>2024</i></span>
         <a class="feature-inner" href="https://www.behance.net/gallery/119048617/GATOZORRO" target="_blank" rel="noopener">
-          <div class="feature-media"><img decoding="async" src="assets/img/gatozorro-portada.webp" alt="Modelo con chaqueta de patrón GATOZORRO bajo el logotipo de la marca" width="1600" height="1027" loading="lazy"></div>
+          <div class="feature-media"><img src="assets/img/gatozorro-portada.webp" alt="Modelo con chaqueta de patrón GATOZORRO bajo el logotipo de la marca" width="1600" height="1027" loading="lazy"></div>
           <div class="feature-copy wrap">
             <p class="label feature-index"><span>02</span> / 04 · Destacado</p>
             <h3 class="titulo feature-title">GATOZORRO</h3>
@@ -236,7 +239,7 @@
         <div class="folder">
           <span class="folder-tab" aria-hidden="true"><b>03</b><span>Barbería, Bogotá</span><i>2022</i></span>
         <a class="feature-inner" href="https://www.behance.net/gallery/147572203/Dapper-Men-Barbers" target="_blank" rel="noopener">
-          <div class="feature-media"><img decoding="async" src="assets/img/dapper-portada.webp" alt="Logotipo de Dapper Men Barbers en letras de neón sobre un barbero tatuado" width="1600" height="1027" loading="lazy"></div>
+          <div class="feature-media"><img src="assets/img/dapper-portada.webp" alt="Logotipo de Dapper Men Barbers en letras de neón sobre un barbero tatuado" width="1600" height="1027" loading="lazy"></div>
           <div class="feature-copy wrap">
             <p class="label feature-index"><span>03</span> / 04 · Destacado</p>
             <h3 class="titulo feature-title">Dapper Men Barbers</h3>
@@ -254,7 +257,7 @@
         <div class="folder">
           <span class="folder-tab" aria-hidden="true"><b>04</b><span>Andina × Millonarios</span><i>2025</i></span>
         <a class="feature-inner" href="https://www.behance.net/gallery/220245487/Andina-Millonarios-Puntos-Azules" target="_blank" rel="noopener">
-          <div class="feature-media"><img decoding="async" src="assets/img/andina-millonarios.webp" alt="Jugadores de Millonarios con la camiseta blanca patrocinada por Andina" width="808" height="632" loading="lazy"></div>
+          <div class="feature-media"><img src="assets/img/andina-millonarios.webp" alt="Jugadores de Millonarios con la camiseta blanca patrocinada por Andina" width="808" height="632" loading="lazy"></div>
           <div class="feature-copy wrap">
             <p class="label feature-index"><span>04</span> / 04 · Destacado</p>
             <h3 class="titulo feature-title">Puntos Azules</h3>
@@ -290,7 +293,7 @@
           <a href="https://www.behance.net/gallery/218897783/Andina-Refajo-Nos-Juntamos-para-que-te-juntes" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>01</b><span>Andina Refajo</span><i>2025</i></span>
-              <figure><img decoding="async" src="assets/img/andina-refajo.webp" alt="Grupo de amigos celebrando con Refajo Andina en una sala de bolos" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/andina-refajo.webp" alt="Grupo de amigos celebrando con Refajo Andina en una sala de bolos" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Nos juntamos para que te juntes <span class="arrow">↗</span></h3>
@@ -303,7 +306,7 @@
           <a href="https://www.behance.net/gallery/233699121/Andina-Feria-de-Cali-Edicion-Especial" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>02</b><span>Andina</span><i>2025</i></span>
-              <figure><img decoding="async" src="assets/img/andina-feria-cali.webp" alt="Latas de edición especial Andina para la Feria de Cali sobre fondo azul" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/andina-feria-cali.webp" alt="Latas de edición especial Andina para la Feria de Cali sobre fondo azul" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Feria de Cali, edición especial <span class="arrow">↗</span></h3>
@@ -316,7 +319,7 @@
           <a href="https://www.behance.net/gallery/220245487/Andina-Millonarios-Puntos-Azules" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>03</b><span>Andina × Millonarios</span><i>2025</i></span>
-              <figure><img decoding="async" src="assets/img/andina-millonarios.webp" alt="Jugadores de Millonarios con la camiseta blanca patrocinada por Andina" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/andina-millonarios.webp" alt="Jugadores de Millonarios con la camiseta blanca patrocinada por Andina" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Puntos Azules <span class="arrow">↗</span></h3>
@@ -329,7 +332,7 @@
           <a href="https://www.behance.net/gallery/119048617/GATOZORRO" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>04</b><span>Marca de ropa</span><i>2024</i></span>
-              <figure><img decoding="async" src="assets/img/gatozorro-01.webp" alt="Modelo con chaqueta de patrón ilustrado de GATOZORRO" width="1600" height="1027" loading="lazy"></figure>
+              <figure><img src="assets/img/gatozorro-01.webp" alt="Modelo con chaqueta de patrón ilustrado de GATOZORRO" width="1600" height="1027" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">GATOZORRO <span class="arrow">↗</span></h3>
@@ -342,7 +345,7 @@
           <a href="https://www.behance.net/gallery/185301681/Clouds-Avianca-Cargo" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>05</b><span>Avianca Cargo</span><i>2024</i></span>
-              <figure><img decoding="async" src="assets/img/avianca-cargo.webp" alt="Nube con forma de animal sobre palmeras y una mano que la señala" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/avianca-cargo.webp" alt="Nube con forma de animal sobre palmeras y una mano que la señala" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Clouds <span class="arrow">↗</span></h3>
@@ -355,7 +358,7 @@
           <a href="https://www.youtube.com/watch?v=Kd15JfVSAz0" target="_blank" rel="noopener" data-video="Kd15JfVSAz0" data-video-titulo="120 · Naiza">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>06</b><span>Naiza</span><i>2023</i></span>
-              <figure><img decoding="async" src="assets/img/naiza-120.webp" alt="Portada del álbum 120 de Naiza, figura iluminada en violeta" width="1600" height="1027" loading="lazy"></figure>
+              <figure><img src="assets/img/naiza-120.webp" alt="Portada del álbum 120 de Naiza, figura iluminada en violeta" width="1600" height="1027" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">120 <span class="arrow">↗</span></h3>
@@ -368,7 +371,7 @@
           <a href="https://www.behance.net/gallery/177823559/Mueve-tus-Puntos-Puntos-Colombia" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>07</b><span>Puntos Colombia</span><i>2023</i></span>
-              <figure><img decoding="async" src="assets/img/puntos-colombia.webp" alt="Pareja comiendo pizza junto a un food truck con letrero de neón" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/puntos-colombia.webp" alt="Pareja comiendo pizza junto a un food truck con letrero de neón" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Mueve tus Puntos <span class="arrow">↗</span></h3>
@@ -381,7 +384,7 @@
           <a href="https://www.behance.net/gallery/179843493/La-Liga-EPM" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>08</b><span>EPM</span><i>2023</i></span>
-              <figure><img decoding="async" src="assets/img/la-liga-epm.webp" alt="Páginas de cómic en blanco y negro de La Liga EPM" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/la-liga-epm.webp" alt="Páginas de cómic en blanco y negro de La Liga EPM" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">La Liga <span class="arrow">↗</span></h3>
@@ -394,7 +397,7 @@
           <a href="https://www.behance.net/gallery/147572203/Dapper-Men-Barbers" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>09</b><span>Barbería</span><i>2022</i></span>
-              <figure><img decoding="async" src="assets/img/dapper.webp" alt="Logotipo de Dapper Men Barbers en letras de neón sobre un barbero tatuado" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/dapper.webp" alt="Logotipo de Dapper Men Barbers en letras de neón sobre un barbero tatuado" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Dapper Men Barbers <span class="arrow">↗</span></h3>
@@ -407,7 +410,7 @@
           <a href="https://www.behance.net/gallery/47842055/Year-of-the-rooster-2017-CreativeMornings-Bog" target="_blank" rel="noopener">
             <div class="card-folder">
               <span class="folder-tab" aria-hidden="true"><b>10</b><span>CreativeMornings Bogotá</span><i>2017</i></span>
-              <figure><img decoding="async" src="assets/img/year-of-the-rooster.webp" alt="Ilustración de gallos en negro sobre fondo magenta, Year of the Rooster 2017" width="808" height="632" loading="lazy"></figure>
+              <figure><img src="assets/img/year-of-the-rooster.webp" alt="Ilustración de gallos en negro sobre fondo magenta, Year of the Rooster 2017" width="808" height="632" loading="lazy"></figure>
             </div>
             <div class="card-meta">
               <h3 class="titulo">Year of the Rooster <span class="arrow">↗</span></h3>
@@ -495,6 +498,6 @@
 
 <script src="assets/vendor/anime.umd.min.js"></script>
 <script src="assets/js/main.js"></script>
-<script src="assets/js/portada.js"></script>
+<script src="assets/js/intro.js"></script>
 </body>
 </html>
