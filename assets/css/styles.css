@@ -48,9 +48,19 @@ a { color: inherit; }
 
 /* Grano: constante en todo el sitio */
 .grain {
-  position: fixed; inset: 0; z-index: 30; pointer-events: none;
-  opacity: .08; mix-blend-mode: screen;
-  background-size: 180px 180px;
+  position: fixed; inset: -60px; z-index: 30; pointer-events: none;
+  opacity: .05;
+  background-size: 160px 160px;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .grain, .hero-grain { animation: grano .9s steps(6) infinite; }
+  .en-scroll .grain, .en-scroll .hero-grain { animation-play-state: paused; }
+  @keyframes grano {
+    0% { transform: translate3d(0, 0, 0); } 17% { transform: translate3d(-40px, 22px, 0); } 33% { transform: translate3d(28px, -34px, 0); }
+    50% { transform: translate3d(-18px, -26px, 0); } 67% { transform: translate3d(36px, 16px, 0); } 83% { transform: translate3d(-30px, 38px, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
 }
 
 .wrap {
@@ -90,10 +100,7 @@ body::before {
 /* Fondo con desvanecido: negro arriba que se disuelve hacia abajo, sin borde duro */
 .site-header::before {
   content: ""; position: absolute; inset: 0 0 -44px 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--negro) 94%, transparent) 0%, color-mix(in srgb, var(--negro) 78%, transparent) 55%, transparent 100%);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
-          mask-image: linear-gradient(to bottom, #000 50%, transparent);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--negro) 96%, transparent) 0%, color-mix(in srgb, var(--negro) 82%, transparent) 50%, color-mix(in srgb, var(--negro) 35%, transparent) 78%, transparent 100%);
 }
 /* Al bajar, el encabezado se queda pero baja al 40% de opacidad; al subir o al pasar el cursor, vuelve a 100% */
 .site-header.oculto { opacity: .4; }
@@ -148,8 +155,7 @@ body::before {
     display: grid; gap: 0;
     padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
     max-height: 0; overflow: hidden;
-    background: color-mix(in srgb, var(--negro) 96%, transparent);
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    background: var(--negro);
     transition: max-height .7s var(--ease), padding .7s var(--ease);
   }
   .menu-abierto .nav { max-height: 360px; padding-block: 8px 28px; }
@@ -174,19 +180,10 @@ body::before {
   min-height: 100vh; min-height: 100svh;
   display: grid; align-items: end;
   background: var(--negro);
-  --mx: 72%; --my: 40%;
 }
-/* Respaldo sin WebGL: halo neón difuso */
-.hero::before {
-  content: ""; position: absolute; inset: 0; z-index: -2; pointer-events: none;
-  background:
-    radial-gradient(22% 30% at 70% 42%, color-mix(in srgb, var(--cian) 24%, transparent), transparent 70%),
-    radial-gradient(55% 60% at 70% 42%, color-mix(in srgb, var(--violeta) 30%, transparent), transparent 72%);
-}
-.hero.has-webgl::before { display: none; }
 /* Portada fija: un cuadro de la escena de bruma con el logo; respira muy despacio */
 .hero-fondo { position: absolute; inset: 0; z-index: -1; display: block; }
-.hero-fondo img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; }
+.hero-fondo img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; will-change: transform; }
 @media (prefers-reduced-motion: no-preference) {
   .hero-fondo img { animation: respira 24s ease-in-out infinite alternate; transform-origin: 70% 40%; }
   @keyframes respira { from { transform: scale(1); } to { transform: scale(1.06) translate3d(-1%, -.5%, 0); } }
@@ -199,60 +196,15 @@ body::before {
     background: linear-gradient(to bottom, transparent, var(--negro) 70%);
   }
 }
-.hero canvas {
-  position: absolute; inset: 0; z-index: -1;
-  width: 100%; height: 100%; display: block;
-}
 /* Grano propio del hero: entre la escena y el texto, nunca encima del texto */
 .hero-grain {
-  position: absolute; inset: -50%; z-index: 0; pointer-events: none;
-  opacity: .09; mix-blend-mode: screen; background-size: 180px 180px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .hero-grain { animation: grano .8s steps(5) infinite; }
-  @keyframes grano {
-    0% { transform: translate(0, 0); } 20% { transform: translate(-6%, 4%); } 40% { transform: translate(5%, -5%); }
-    60% { transform: translate(-3%, -4%); } 80% { transform: translate(6%, 3%); } 100% { transform: translate(0, 0); }
-  }
+  position: absolute; inset: -60px; z-index: 0; pointer-events: none;
+  opacity: .06; background-size: 160px 160px; will-change: transform;
 }
 
-/* El sujeto: aparece solo donde cae la linterna (sigue al cursor) */
-.hero-sujeto {
-  position: absolute; z-index: 1; bottom: 0;
-  right: max(2vw, calc((100% - var(--wrap)) / 2));
-  height: min(92%, 980px); aspect-ratio: 1059 / 1253;
-  pointer-events: none;
-  /* Linterna: un óvalo de luz inclinado 25°, más una penumbra mínima y el fundido de la base.
-     JS mueve el óvalo con --lx/--ly (en px) */
-  --lw: 560px; --lx: 0px; --ly: 0px;
-  -webkit-mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.45' stop-color='%23fff' stop-opacity='.88'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='100' cy='100' rx='96' ry='52' transform='rotate(-25 100 100)' fill='url(%23g)'/%3E%3C/svg%3E"),
-    linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.1)),
-    linear-gradient(to top, transparent 0%, #000 30%);
-  -webkit-mask-size: var(--lw) var(--lw), 100% 100%, 100% 100%;
-  -webkit-mask-position: var(--lx) var(--ly), 0 0, 0 0;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-composite: source-over, source-in;
-          mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.45' stop-color='%23fff' stop-opacity='.88'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='100' cy='100' rx='96' ry='52' transform='rotate(-25 100 100)' fill='url(%23g)'/%3E%3C/svg%3E"),
-    linear-gradient(rgba(0,0,0,.1), rgba(0,0,0,.1)),
-    linear-gradient(to top, transparent 0%, #000 30%);
-          mask-size: var(--lw) var(--lw), 100% 100%, 100% 100%;
-          mask-position: var(--lx) var(--ly), 0 0, 0 0;
-          mask-repeat: no-repeat;
-          mask-composite: add, intersect;
-  transition: opacity 1.6s var(--ease);
-}
-.hero-sujeto img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; display: block; }
-.en-intro .hero-sujeto { opacity: 0; }
-/* Con WebGL, el sujeto se pinta dentro de la escena (agua, volumen, bruma delante); el img queda de respaldo */
-.sujeto-en-escena .hero-sujeto { visibility: hidden; }
-@media (max-width: 760px) {
-  .hero-sujeto { right: 50%; transform: translateX(50%); height: 62%; bottom: 30%; }
-}
 
 .hero-grid {
-  position: relative; z-index: 2; width: 100%; will-change: transform;
+  position: relative; z-index: 2; width: 100%;
   display: grid; gap: 22px; align-content: end;
   min-height: 100vh; min-height: 100svh;
   padding-block: clamp(96px, 14vh, 160px) clamp(28px, 5vh, 56px);
@@ -291,9 +243,9 @@ body::before {
 @media (prefers-reduced-motion: no-preference) {
   .hero h1 { animation: desfase 7s steps(1) infinite; }
   @keyframes desfase {
-    0%, 92%, 96%, 100% { transform: none; filter: none; }
-    93% { transform: translateX(-1px); filter: drop-shadow(1.5px 0 1px rgba(223, 0, 247, .35)) drop-shadow(-1.5px 0 1px rgba(0, 230, 255, .35)); }
-    94.5% { transform: translateX(.5px); filter: drop-shadow(-1px 0 1px rgba(223, 0, 247, .25)); }
+    0%, 92%, 96%, 100% { transform: none; }
+    93% { transform: translate3d(-1px, 0, 0); }
+    94.5% { transform: translate3d(.5px, 0, 0); }
   }
 }
 
@@ -315,12 +267,17 @@ body::before {
    Glow óptico, bloom (halo amplio) y halation (filo cálido) */
 .hero-llama { width: clamp(64px, 7vw, 104px); margin-bottom: 4px; }
 .hero-llama svg {
-  display: block; width: 100%; height: auto; overflow: visible;
-  filter:
-    drop-shadow(0 0 3px rgba(255, 0, 122, .55))
-    drop-shadow(0 0 14px rgba(59, 61, 255, .65))
-    drop-shadow(0 0 36px rgba(59, 61, 255, .45))
-    drop-shadow(0 0 80px rgba(223, 0, 247, .35));
+  position: relative; display: block; width: 100%; height: auto; overflow: visible;
+  /* Solo el brillo cercano va en el SVG; el bloom amplio es la capa ::before */
+  filter: drop-shadow(0 0 3px rgba(255, 0, 122, .55)) drop-shadow(0 0 12px rgba(59, 61, 255, .6));
+}
+.hero-llama { position: relative; }
+.hero-llama::before {
+  content: ""; position: absolute; inset: -70%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(closest-side, rgba(59, 61, 255, .42), rgba(59, 61, 255, .16) 45%, transparent 72%),
+    radial-gradient(closest-side, transparent 50%, rgba(223, 0, 247, .22) 66%, rgba(255, 0, 122, .1) 78%, transparent 92%);
+  will-change: transform, opacity;
 }
 /* Entrada: la N aparece sola con un parpadeo (flicker) de 0,3 s; enseguida salta la chispa
    y el estallido de fuego (chispa, llama y brasas) que vive en el SVG */
@@ -331,15 +288,16 @@ body::before {
     56% { opacity: .3; } 70% { opacity: 1; } 85% { opacity: .55; } 100% { opacity: 1; }
   }
 }
-/* Halo como el de la referencia: azul profundo pegado a la forma y un anillo #ff007a/#df00f7 afuera, respirando */
+/* Bloom vivo: la capa de luz respira y gira despacio (solo opacity y transform) */
 @media (prefers-reduced-motion: no-preference) {
-  .hero-llama svg { animation: bloom-llama 11s ease-in-out infinite; }
+  .hero-llama::before { animation: bloom-llama 11s ease-in-out infinite; }
   @keyframes bloom-llama {
-    0%, 100% { filter: drop-shadow(0 0 3px rgba(255,0,122,.55)) drop-shadow(0 0 14px rgba(59,61,255,.65)) drop-shadow(0 0 36px rgba(59,61,255,.45)) drop-shadow(0 0 80px rgba(223,0,247,.35)); }
-    35%      { filter: drop-shadow(0 0 4px rgba(255,0,122,.7)) drop-shadow(0 0 18px rgba(59,61,255,.75)) drop-shadow(0 0 48px rgba(223,0,247,.45)) drop-shadow(0 0 100px rgba(255,0,122,.35)); }
-    70%      { filter: drop-shadow(0 0 2px rgba(223,0,247,.5)) drop-shadow(0 0 12px rgba(0,237,255,.5)) drop-shadow(0 0 40px rgba(59,61,255,.5)) drop-shadow(0 0 90px rgba(59,61,255,.35)); }
+    0%, 100% { opacity: .85; transform: scale(1) rotate(0deg); }
+    35%      { opacity: 1; transform: scale(1.12) rotate(8deg); }
+    70%      { opacity: .7; transform: scale(.95) rotate(-6deg); }
   }
 }
+
 
 
 
@@ -363,32 +321,6 @@ body::before {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-
-/* ---------- Intro: el logo sale de la bruma (primera visita de la sesión) ---------- */
-.site-header { transition: opacity .8s var(--ease), transform .8s var(--ease); }
-.en-intro .site-header { opacity: 0; transform: translateY(-100%); pointer-events: none; }
-.en-intro .hero::before { opacity: 0; }
-.intro-saltar {
-  position: absolute; z-index: 3;
-  right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  padding: 10px 14px; border: 1px solid var(--linea); border-radius: 999px;
-  background: color-mix(in srgb, var(--negro) 60%, transparent); color: var(--niebla); cursor: pointer;
-  transition: color .4s var(--ease), border-color .4s var(--ease), opacity .4s var(--ease);
-}
-.intro-saltar:hover { color: var(--cian); border-color: var(--cian); }
-
-.btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 13px 20px;
-  font: 500 .875rem/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase;
-  text-decoration: none;
-  border: 1px solid var(--linea); border-radius: 999px;
-  background: transparent; color: var(--texto); cursor: pointer;
-  transition: background .4s var(--ease), border-color .4s var(--ease), color .4s var(--ease), box-shadow .4s var(--ease);
-}
-.btn:hover { border-color: var(--cian); color: var(--cian); }
-.btn--solid { background: var(--cian); color: var(--negro); border-color: var(--cian); }
-.btn--solid:hover { background: var(--blanco); border-color: var(--blanco); color: var(--negro); box-shadow: 0 0 32px color-mix(in srgb, var(--cian) 45%, transparent); }
 
 /* ---------- Clientes ---------- */
 .clients { border-block: 1px solid var(--linea); background: var(--negro); }
@@ -415,7 +347,6 @@ body::before {
   position: absolute; left: -10%; top: 50%; width: 60%; height: 220%;
   transform: translateY(-50%); pointer-events: none; z-index: -1; opacity: 0;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--cian) 30%, transparent), color-mix(in srgb, var(--violeta) 18%, transparent) 55%, transparent);
-  filter: blur(20px);
 }
 
 /* Filtros */
@@ -478,17 +409,24 @@ body::before {
   width: 100%; height: 100%; object-fit: cover;   /* recorta sin deformar */
   transition: transform 1.2s var(--ease), filter .8s var(--ease);
   filter: saturate(.92);
-  /* El color sube de abajo hacia arriba sobre la copia en blanco y negro */
-  --rev: 135%;
-  -webkit-mask-image: linear-gradient(to top, #000 calc(var(--rev) - 35%), transparent var(--rev));
-          mask-image: linear-gradient(to top, #000 calc(var(--rev) - 35%), transparent var(--rev));
 }
+/* El color sube de abajo hacia arriba: una cortina en blanco y negro (con borde suave)
+   se desliza hacia arriba mientras su imagen se queda quieta. Todo con transform. */
 .card .card-bn {
-  position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover;
-  -webkit-mask-image: none; mask-image: none;
-  filter: grayscale(1) brightness(.55) contrast(1.05);
+  position: absolute; left: 0; right: 0; top: 0; height: 140%; z-index: 0; overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 28%);
+          mask-image: linear-gradient(to top, transparent 0%, #000 28%);
+  transition: transform 2.2s cubic-bezier(.45, 0, .25, 1);
+  will-change: transform;
 }
-.card figure img:not(.card-bn) { position: relative; z-index: 0; }
+.card .card-bn img {
+  position: absolute; left: 0; top: 0; width: 100%; height: calc(100% / 1.4); object-fit: cover;
+  filter: grayscale(1) brightness(.55) contrast(1.05);
+  -webkit-mask-image: none; mask-image: none;
+  transition: transform 2.2s cubic-bezier(.45, 0, .25, 1);
+}
+.card .card-bn.se-va { transform: translate3d(0, -100%, 0); }
+.card .card-bn.se-va img { transform: translate3d(0, 140%, 0); }
 .card a:hover img, .card a:focus-visible img { transform: scale(1.025); filter: saturate(1.05); }
 .card-meta {
   display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: baseline;
@@ -510,29 +448,6 @@ body::before {
 }
 .about-body { display: grid; gap: 32px; min-width: 0; align-content: start; }
 .about-head { display: grid; gap: 16px; align-content: start; }
-.about-foto {
-  position: relative; margin: 16px 0 0; overflow: hidden; border-radius: 4px;
-  aspect-ratio: 4 / 5; max-width: 420px; background: var(--negro-2);
-}
-.about-foto img { width: 100%; height: 100%; object-fit: cover; }
-/* La foto se revela con un barrido de luz en diagonal (25°) al entrar en pantalla */
-.about-foto img {
-  -webkit-mask-image: linear-gradient(115deg, #000 42%, rgba(0,0,0,.08) 58%);
-          mask-image: linear-gradient(115deg, #000 42%, rgba(0,0,0,.08) 58%);
-  -webkit-mask-size: 320% 100%; mask-size: 320% 100%;
-  -webkit-mask-position: 0% 0; mask-position: 0% 0;
-  transition: -webkit-mask-position 2.2s var(--ease), mask-position 2.2s var(--ease), transform 1.2s var(--ease), filter 1.2s var(--ease);
-}
-.about-foto.por-revelar img { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
-/* Filo de luz cian que recorre el borde izquierdo al pasar el cursor */
-.about-foto::after {
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
-  background: linear-gradient(to bottom, transparent, var(--cian), transparent);
-  box-shadow: 0 0 16px var(--cian);
-  transform: scaleY(0); transition: transform 1s var(--ease);
-}
-.about-foto:hover::after { transform: scaleY(1); }
-.about-foto:hover img { transform: scale(1.03); filter: brightness(1.08) saturate(1.1); }
 .services-titulo { margin: 8px 0 -16px; color: var(--cian); }
 .about-body p { margin: 0; max-width: 62ch; font-size: var(--step-1); line-height: 1.5; color: var(--niebla); }
 .about-body p:first-child { color: var(--texto); }
@@ -556,11 +471,10 @@ body::before {
   background:
     radial-gradient(50% 50% at 40% 50%, color-mix(in srgb, var(--violeta) 30%, transparent), transparent 70%),
     radial-gradient(40% 40% at 70% 40%, color-mix(in srgb, var(--cian) 16%, transparent), transparent 70%);
-  filter: blur(30px);
 }
 @media (prefers-reduced-motion: no-preference) {
   .contact::before { animation: ondas 18s var(--ease) infinite alternate; }
-  @keyframes ondas { to { transform: translate(-8%, -6%) scale(1.15) rotate(6deg); } }
+  @keyframes ondas { to { transform: translate3d(-8%, -6%, 0); } }
 }
 .contact .wrap { display: grid; gap: 40px; padding-block: clamp(72px, 10vw, 140px); }
 .contact h2 { margin: 0; font-size: clamp(1.6rem, 4.4vw, 3.7rem); line-height: 1; max-width: 13ch; }   /* 33% más pequeño */
@@ -615,40 +529,6 @@ body::before {
 .site-footer ul { display: flex; gap: 20px; margin: 0; padding: 0; list-style: none; }
 .site-footer a { text-decoration: none; }
 .site-footer a:hover { color: var(--cian); }
-
-/* ---------- Página de caso ---------- */
-.case-hero .wrap { display: grid; gap: 28px; padding-block: clamp(48px, 8vw, 104px) 40px; }
-.case-hero h1 { margin: 0; font-size: var(--step-4); line-height: .98; }
-.case-hero .lede { margin: 0; max-width: 52ch; font-size: var(--step-1); line-height: 1.5; color: var(--niebla); }
-.case-hero a.label { text-decoration: none; }
-.case-hero a.label:hover { color: var(--cian); }
-.case-cover { margin: 0; }
-.case-cover img { width: 100%; height: auto; }
-
-.specs {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  margin: 0; border-bottom: 1px solid var(--linea);
-}
-.specs div { padding: 20px 16px 20px 0; border-top: 1px solid var(--linea); min-width: 0; }
-.specs dt { margin-bottom: 6px; }
-.specs dd { margin: 0; font-weight: 500; }
-
-.case-story { display: grid; gap: 56px; }
-.story-block { display: grid; gap: 16px; }
-@media (min-width: 900px) {
-  .story-block { grid-template-columns: 4fr 8fr; gap: 40px; }
-}
-.story-block h2 { margin: 0; font-size: var(--step-2); line-height: 1.1; }
-.story-block p { margin: 0; max-width: 62ch; font-size: 1.125rem; color: var(--niebla); }
-.story-block p + p { margin-top: 1em; }
-
-.gallery { display: grid; gap: clamp(12px, 2vw, 24px); }
-@media (min-width: 760px) {
-  .gallery { grid-template-columns: 1fr 1fr; }
-  .gallery .wide { grid-column: 1 / -1; }
-}
-.gallery figure { margin: 0; }
-.gallery img { width: 100%; height: 100%; object-fit: cover; }
 
 .next-case { border-top: 1px solid var(--linea); }
 .next-case a {
@@ -713,12 +593,15 @@ body::before {
   border-radius: 0 14px 14px 14px;
   backface-visibility: hidden;
 }
-/* La imagen vive en la sombra: solo se ve donde llega la linterna */
-.feature-media {
-  position: absolute; inset: 0; overflow: hidden; background: var(--negro);
-  --lx: 30%; --ly: 85%; --lr: 0%; --lr2: 0%;
-  -webkit-mask-image: radial-gradient(ellipse calc(var(--lr) * .62) var(--lr) at var(--lx) var(--ly), #000 0%, #000 45%, rgba(0,0,0,.04) 100%);
-          mask-image: radial-gradient(ellipse calc(var(--lr) * .62) var(--lr) at var(--lx) var(--ly), #000 0%, #000 45%, rgba(0,0,0,.04) 100%);
+.feature-media { position: absolute; inset: 0; overflow: hidden; background: var(--negro); }
+/* La imagen vive en la sombra: una capa oscura con un hueco de luz (la linterna).
+   La capa mide 3 veces la imagen; JS la mueve y la escala, sin repintar la imagen. */
+.feature-oscuridad {
+  position: absolute; left: -100%; top: -100%; width: 300%; height: 300%; z-index: 1; pointer-events: none;
+  background: radial-gradient(closest-side, transparent 0%, transparent 9%, rgba(5, 10, 10, .55) 15%, rgba(5, 10, 10, .97) 24%);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  transition: opacity .3s linear;
 }
 .feature-media img {
   width: 100%; height: 100%; object-fit: cover;
