@@ -383,7 +383,7 @@
     }
   }
 
-  // Skills: los bloques suben uno tras otro y sus herramientas aparecen después
+  // Qué puedo hacer por ti: los bloques suben uno tras otro y sus herramientas aparecen después
   const skills = document.querySelector('.skills');
   if (skills && A && 'IntersectionObserver' in window && skills.getBoundingClientRect().top > window.innerHeight) {
     const bloques = skills.querySelectorAll('.skill');

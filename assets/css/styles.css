@@ -539,18 +539,7 @@ body::before {
 .services-titulo { margin: 8px 0 -16px; color: var(--cian); }
 .about-body p { margin: 0; max-width: 62ch; font-size: var(--step-1); line-height: 1.5; color: var(--niebla); }
 .about-body p:first-child { color: var(--texto); }
-.services {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  margin: 0; padding: 0; list-style: none;
-  border-top: 1px solid var(--linea);
-}
-.services li {
-  display: grid; gap: 6px; padding: 18px 16px 18px 0;
-  border-bottom: 1px solid var(--linea);
-}
-.services b { font: 800 1rem/1.2 var(--f-titulo); letter-spacing: .04em; text-transform: uppercase; }
-.services span { color: var(--niebla); font-size: .95rem; }
-/* Skills: un bloque por disciplina con sus herramientas como etiquetas */
+/* Qué puedo hacer por ti: un bloque por disciplina con sus herramientas como etiquetas */
 .skills {
   display: grid; grid-template-columns: 1fr; gap: 1px;
   background: var(--linea); border: 1px solid var(--linea); border-radius: 0 12px 12px 12px; overflow: hidden;
@@ -561,7 +550,10 @@ body::before {
   transition: background .5s var(--ease);
 }
 .skill:hover { background: var(--negro-2); }
-@media (min-width: 560px) { .skills { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 560px) {
+  .skills { grid-template-columns: 1fr 1fr; }
+  .skill:last-child:nth-child(odd) { grid-column: 1 / -1; }   /* el bloque suelto ocupa todo el ancho */
+}
 .skill b { font: 800 1rem/1.2 var(--f-titulo); letter-spacing: .04em; text-transform: uppercase; color: var(--texto); }
 .skill > span { color: var(--niebla); font-size: .95rem; line-height: 1.45; }
 .tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
