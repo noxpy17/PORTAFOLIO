@@ -28,7 +28,9 @@
   // Para volver a activarla: INTRO_ACTIVA = true y cargar de nuevo assets/js/hero-bruma.js en index.html.
   const INTRO_ACTIVA = false;
   let seen = !INTRO_ACTIVA;
-  try { seen = sessionStorage.getItem('noxpy-intro') === '1'; } catch (e) { /* sin almacenamiento: se muestra la intro */ }
+  if (INTRO_ACTIVA) {
+    try { seen = sessionStorage.getItem('noxpy-intro') === '1'; } catch (e) { /* sin almacenamiento: se muestra la intro */ }
+  }
 
   if (seen) {
     entrarHero(0);

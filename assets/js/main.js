@@ -166,13 +166,15 @@
     });
   }
 
-  // Destacados: el revelado sigue al scroll (suavizado), con paralaje y apilado
+  // Destacados: carrusel vertical. Las carpetas viven en un escenario fijo y suben una tras otra;
+  // el avance sigue al scroll con inercia, así el movimiento es continuo aunque la rueda vaya a saltos
   const features = [...document.querySelectorAll('.feature')];
   if (features.length) {
-    const clamp = (v) => Math.min(Math.max(v, 0), 1);
-    const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2); // ease-in-out
+    const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+    const stack = document.querySelector('.feature-stack');
+    const carrusel = !reduceMotion && !!stack;
 
-    // Sombra que cae sobre el proyecto que queda debajo
+    // Penumbra de las carpetas que no están al frente
     features.forEach((f) => {
       const shade = document.createElement('div');
       shade.className = 'feature-shade';
@@ -180,25 +182,37 @@
       f.querySelector('.feature-inner').append(shade);
     });
 
-    // Título letra por letra y datos: entran cuando el proyecto ya está casi asentado
-    if (A && 'IntersectionObserver' in window) {
-      const fold = window.innerHeight;
-      const io2 = new IntersectionObserver((entries) => {
+    let stage = null;
+    if (carrusel) {
+      stage = document.createElement('div');
+      stage.className = 'feature-stage';
+      features.forEach((f) => stage.append(f));
+      stack.append(stage);
+      stack.classList.add('carrusel');
+    }
+
+    // Título letra por letra y datos: entran cuando la carpeta llega al frente
+    const entrarTitulo = (f) => {
+      const tl = A.createTimeline({ defaults: { ease: EASE } });
+      tl.add(f.querySelectorAll('.feature-title .ch'), {
+        translateY: ['110%', '0%'], rotate: [4, 0], duration: 900, delay: A.stagger(22),
+      })
+        .add(f.querySelector('.feature-index'), { opacity: [0, 1], translateX: [-16, 0], duration: 700 }, 0)
+        .add(f.querySelectorAll('.feature-meta > *'), {
+          opacity: [0, 1], translateY: [18, 0], duration: 700, delay: A.stagger(90),
+        }, '-=600');
+    };
+    const io2 = A && !carrusel && 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
           io2.unobserve(entry.target);
-          const f = entry.target;
-          const tl = A.createTimeline({ defaults: { ease: EASE } });
-          tl.add(f.querySelectorAll('.feature-title .ch'), {
-            translateY: ['110%', '0%'], rotate: [4, 0], duration: 900, delay: A.stagger(22),
-          })
-            .add(f.querySelector('.feature-index'), { opacity: [0, 1], translateX: [-16, 0], duration: 700 }, 0)
-            .add(f.querySelectorAll('.feature-meta > *'), {
-              opacity: [0, 1], translateY: [18, 0], duration: 700, delay: A.stagger(90),
-            }, '-=600');
+          entrarTitulo(entry.target);
         });
-      }, { threshold: 0.55 });
-
+      }, { threshold: 0.55 })
+      : null;
+    if (A && (carrusel || io2)) {
+      const fold = window.innerHeight;
       features.forEach((f) => {
         if (f.getBoundingClientRect().top < fold * 0.5) return; // lo visible al cargar se queda quieto
         const title = f.querySelector('.feature-title');
@@ -220,72 +234,91 @@
           if (i < words.length - 1) title.append(' ');
         });
         f.querySelectorAll('.feature-index, .feature-meta > *').forEach((el) => { el.style.opacity = '0'; });
-        io2.observe(f);
+        f.dataset.titulo = 'pendiente';
+        if (io2) io2.observe(f);
+      });
+    }
+
+    if (carrusel) {
+      const N = features.length;
+      const parts = features.map((f) => ({
+        f,
+        folder: f.querySelector('.folder'),
+        img: f.querySelector('.feature-media img'),
+        copy: f.querySelector('.feature-copy'),
+        shade: f.querySelector('.feature-shade'),
+        lejos: false,
+      }));
+      // Pausas (en pantallas) antes de la primera carpeta y después de la última
+      const INICIO = 0.3, FINAL = 0.4;
+      // Entre carpeta y carpeta: una pausa corta y luego el paso con ease-in-out
+      const paso = (x) => { const g = clamp((x - 0.12) / 0.76); return g * g * (3 - 2 * g); };
+      let unidad = 0;
+      const medir = () => {
+        unidad = stage.offsetHeight;
+        stack.style.height = `${((N - 1 + INICIO + FINAL + 1) * unidad).toFixed(0)}px`;
+      };
+      medir();
+      // Posición del carrusel según el scroll: 0 = primera carpeta al frente, N-1 = la última
+      const objetivo = () => {
+        const s = -stack.getBoundingClientRect().top / unidad;
+        if (s < 0) return Math.max(s, -1) * 0.35; // la primera sube un poco mientras el bloque entra
+        const u = Math.min(s - INICIO, N - 1);
+        if (u <= 0) return 0;
+        const i = Math.floor(u);
+        return i >= N - 1 ? N - 1 : i + paso(u - i);
+      };
+
+      const aplicar = (p, o) => {
+        const a = Math.abs(o);
+        // Lo que está fuera del escenario no se toca
+        const lejos = a > 1.6;
+        if (lejos && p.lejos) return;
+        p.lejos = lejos;
+        // Tambor: la carpeta de arriba se inclina hacia atrás y se va; la de abajo sube enderezándose
+        p.folder.style.transform = `translate3d(0, ${(o * 108).toFixed(2)}%, 0) rotateX(${(-o * 24).toFixed(2)}deg) scale(${(1 - Math.min(a, 1.5) * 0.12).toFixed(4)})`;
+        // Paralaje dentro de la carpeta: la imagen viaja en sentido contrario
+        p.img.style.transform = `translate3d(0, ${(clamp(o, -1.2, 1.2) * -10).toFixed(2)}%, 0) scale(1.24)`;
+        // El texto llega después que la imagen: profundidad
+        p.copy.style.transform = `translate3d(0, ${(o * 160).toFixed(1)}px, 0)`;
+        p.copy.style.opacity = clamp(1 - a * 1.6).toFixed(3);
+        p.shade.style.opacity = Math.min(a * 0.9, 0.8).toFixed(3);
+        p.folder.style.setProperty('--p', clamp(1 - a * 1.5).toFixed(3));
+        p.folder.style.setProperty('--c', clamp(a * 0.25).toFixed(3));
+        if (a < 0.2 && p.f.dataset.titulo === 'pendiente') {
+          p.f.dataset.titulo = '';
+          entrarTitulo(p.f);
+        }
+      };
+
+      let t = objetivo(), raf = 0, antes = 0;
+      const pintar = () => parts.forEach((p, i) => aplicar(p, i - t));
+      const frame = (now) => {
+        const dt = antes ? Math.min((now - antes) / 1000, 0.05) : 1 / 60;
+        antes = now;
+        const meta = objetivo();
+        // Inercia independiente de los fps: alcanza el scroll en unos 300 ms
+        t += (meta - t) * (1 - Math.exp(-dt * 9));
+        if (Math.abs(meta - t) < 0.0005) t = meta;
+        pintar();
+        raf = t !== meta ? requestAnimationFrame(frame) : 0;
+        if (!raf) antes = 0;
+      };
+      const kickScroll = () => { if (!raf) raf = requestAnimationFrame(frame); };
+      window.addEventListener('scroll', kickScroll, { passive: true });
+      window.addEventListener('resize', () => { medir(); kickScroll(); });
+      pintar();
+
+      // Con teclado: al enfocar una carpeta, el scroll la trae al frente
+      features.forEach((f, i) => {
+        f.querySelector('.feature-inner').addEventListener('focus', () => {
+          const y = window.scrollY + stack.getBoundingClientRect().top + (INICIO + i) * unidad;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        });
       });
     }
 
     if (!reduceMotion) {
-      const stack = document.querySelector('.feature-stack');
-      const parts = features.map((f) => ({
-        inner: f.querySelector('.folder'),
-        media: f.querySelector('.feature-media'),
-        img: f.querySelector('.feature-media img'),
-        copy: f.querySelector('.feature-copy'),
-        shade: f.querySelector('.feature-shade'),
-        e: -1, c: -1, // valores suavizados (entrada y cubierta)
-      }));
-
-      const apply = (p, hasNext) => {
-        const e = suave(p.e);
-        const open = 1 - e;
-        // Paralaje marcado: la imagen viaja bastante más lento que la página y sigue derivando mientras está cubierta
-        p.img.style.transform = `translate3d(0, ${p.d.toFixed(2)}%, 0) scale(${(1.3 - e * 0.12).toFixed(4)})`;
-        // El texto llega claramente después que la imagen: profundidad
-        p.copy.style.transform = `translate3d(0, ${(open * 200 - p.c * 90).toFixed(1)}px, 0)`;
-        p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - p.c * 2.2), 0).toFixed(3);
-        // Entrada: la carpeta sube inclinada y pequeña, y se endereza al asentarse.
-        // Salida: el siguiente la cubre; esta se aleja, se encoge, gira un poco y cae en sombra
-        const c = hasNext ? suave(p.c) : 0;
-        const giro = open * 3 - c * 2.5;
-        const escala = (0.84 + e * 0.16) * (1 - c * 0.2);
-        p.inner.style.transform = open > 0.001 || c > 0.001
-          ? `translate3d(0, ${(open * 6 - c * 8).toFixed(2)}%, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`
-          : '';
-        if (hasNext) p.shade.style.opacity = (c * 0.8).toFixed(3);
-        p.inner.style.setProperty('--p', e.toFixed(3));
-        p.inner.style.setProperty('--c', p.c.toFixed(3));
-      };
-
-      let raf = 0;
-      const frame = () => {
-        const vh = window.innerHeight;
-        const rects = features.map((f) => f.getBoundingClientRect());
-        const stackBottom = stack.getBoundingClientRect().bottom;
-        let moving = false;
-        parts.forEach((p, i) => {
-          const te = clamp(1 - rects[i].top / vh);
-          const next = rects[i + 1];
-          // El último destacado solo empieza a "salir" cuando el bloque de destacados termina
-          const tc = next ? clamp(1 - next.top / vh) : clamp((vh - stackBottom) / vh);
-          // La geometría (recorte, escala, sombra) sigue el scroll exacto: así nunca se
-          // desfasa del bloque. Solo el paralaje de la imagen lleva inercia.
-          p.e = te;
-          p.c = tc;
-          const td = (1 - te) * -14 + tc * 7;
-          if (p.d === undefined) p.d = td;
-          p.d += (td - p.d) * 0.16;
-          if (Math.abs(td - p.d) > 0.01) moving = true;
-          // Lo que está lejos de la pantalla no se toca
-          if (rects[i].top > vh * 1.1 || rects[i].bottom < -vh * 0.1) return;
-          apply(p, !!next);
-        });
-        raf = moving ? requestAnimationFrame(frame) : 0;
-      };
-      const kickScroll = () => { if (!raf) raf = requestAnimationFrame(frame); };
-      window.addEventListener('scroll', kickScroll, { passive: true });
-      window.addEventListener('resize', kickScroll);
-      kickScroll();
-
       // Cursor "Ver": un anillo fino que sigue al mouse con inercia
       if (window.matchMedia('(pointer: fine)').matches) {
         const cur = document.createElement('div');
