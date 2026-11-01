@@ -257,6 +257,9 @@
       let unidad = 0;
       const medir = () => {
         unidad = stage.offsetHeight;
+        // La carpeta al frente empieza justo bajo el encabezado
+        const hdr = document.querySelector('.site-header');
+        if (hdr) stack.style.setProperty('--hdr', `${hdr.offsetHeight}px`);
         stack.style.height = `${((N - 1 + INICIO + FINAL + 1) * unidad).toFixed(0)}px`;
       };
       medir();
@@ -292,7 +295,7 @@
         p.folder.style.setProperty('--r', quieta ? '0' : Math.max(open, c).toFixed(3));
         p.folder.style.filter = c > 0.005 ? `blur(${(c * 7).toFixed(2)}px)` : '';
         // Paralaje: la imagen viaja más lento que la carpeta y sigue derivando mientras está cubierta
-        p.img.style.transform = `translate3d(0, ${(open * -14 + c * 7).toFixed(2)}%, 0) scale(${(1.3 - e * 0.12).toFixed(4)})`;
+        p.img.style.transform = `translate3d(0, ${(open * -11 + c * 3).toFixed(2)}%, 0) scale(${(1.24 - e * 0.16).toFixed(4)})`;
         // El texto llega después que la imagen: profundidad
         p.copy.style.transform = `translate3d(0, ${(open * 200 - c * 90).toFixed(1)}px, 0)`;
         p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - c * 2.2), 0).toFixed(3);
