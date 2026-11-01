@@ -437,11 +437,11 @@ body::before {
   .work-grid { grid-template-columns: 1fr 1fr; column-gap: clamp(24px, 4vw, 64px); row-gap: 72px; padding-bottom: 96px; }
   .work-grid .card.is-offset { margin-top: 96px; margin-bottom: -96px; }
 }
-/* Pantalla completa: tres columnas escalonadas, cada una más abajo que la anterior */
+/* Pantalla completa: tres columnas escalonadas; la tercera sube a medio camino entre la primera y la segunda */
 @media (min-width: 1200px) {
-  .work-grid { grid-template-columns: repeat(3, 1fr); column-gap: clamp(24px, 2.4vw, 48px); padding-bottom: 176px; }
+  .work-grid { grid-template-columns: repeat(3, 1fr); column-gap: clamp(24px, 2.4vw, 48px); padding-bottom: 88px; }
   .work-grid .card[data-col="1"] { margin-top: 88px; margin-bottom: -88px; }
-  .work-grid .card[data-col="2"] { margin-top: 176px; margin-bottom: -176px; }
+  .work-grid .card[data-col="2"] { margin-top: 44px; margin-bottom: -44px; }
 }
 .card a { display: grid; gap: 16px; text-decoration: none; }
 .card figure {
