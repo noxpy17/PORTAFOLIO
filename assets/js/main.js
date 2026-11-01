@@ -279,11 +279,11 @@
         const e = 1 - clamp(o);
         const c = clamp(-o);
         const open = 1 - e;
-        // Entrada: sube desde abajo pequeña e inclinada, y crece hasta enderezarse encima de la anterior.
+        // Entrada: sube recta desde abajo, pequeña, y crece encima de la anterior.
         // La primera no sube: solo crece mientras el bloque entra en pantalla
         const sube = i === 0 ? 0 : open * unidad;
         // Salida: la siguiente la cubre; esta se va hacia atrás, se encoge, gira un poco, se desenfoca y cae en sombra
-        const giro = open * 3 - c * 2.5;
+        const giro = -c * 2.5;
         const escala = (0.84 + e * 0.16) * (1 - c * 0.2);
         p.folder.style.transform = `translate3d(0, ${(sube + (open * 0.06 - c * 0.08) * unidad).toFixed(1)}px, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`;
         p.folder.style.filter = c > 0.005 ? `blur(${(c * 7).toFixed(2)}px)` : '';
