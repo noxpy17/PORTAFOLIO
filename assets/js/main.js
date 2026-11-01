@@ -166,8 +166,9 @@
     });
   }
 
-  // Destacados: carrusel vertical. Las carpetas viven en un escenario fijo y suben una tras otra;
-  // el avance sigue al scroll con inercia, así el movimiento es continuo aunque la rueda vaya a saltos
+  // Destacados: carpetas apiladas. Viven en un escenario fijo; cada una sube y cubre a la anterior,
+  // que se va hacia atrás desenfocada.
+  // El avance sigue al scroll con inercia, así el movimiento es continuo aunque la rueda vaya a saltos
   const features = [...document.querySelectorAll('.feature')];
   if (features.length) {
     const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
@@ -252,7 +253,7 @@
       // Pausas (en pantallas) antes de la primera carpeta y después de la última
       const INICIO = 0.3, FINAL = 0.4;
       // Entre carpeta y carpeta: una pausa corta y luego el paso con ease-in-out
-      const paso = (x) => { const g = clamp((x - 0.12) / 0.76); return g * g * (3 - 2 * g); };
+      const paso = (x) => { const g = clamp((x - 0.1) / 0.8); return g * g * g * (g * (g * 6 - 15) + 10); };
       let unidad = 0;
       const medir = () => {
         unidad = stage.offsetHeight;
@@ -262,43 +263,52 @@
       // Posición del carrusel según el scroll: 0 = primera carpeta al frente, N-1 = la última
       const objetivo = () => {
         const s = -stack.getBoundingClientRect().top / unidad;
-        if (s < 0) return Math.max(s, -1) * 0.35; // la primera sube un poco mientras el bloque entra
+        if (s < 0) return Math.max(s, -1); // la primera crece mientras el bloque entra
         const u = Math.min(s - INICIO, N - 1);
         if (u <= 0) return 0;
         const i = Math.floor(u);
         return i >= N - 1 ? N - 1 : i + paso(u - i);
       };
 
-      const aplicar = (p, o) => {
-        const a = Math.abs(o);
-        // Lo que está fuera del escenario no se toca
-        const lejos = a > 1.6;
+      const aplicar = (p, o, i) => {
+        // Lo que ya quedó tapado del todo no se toca
+        const lejos = o < -1.4 || o > 1.4;
         if (lejos && p.lejos) return;
         p.lejos = lejos;
-        // Tambor: la carpeta de arriba se inclina hacia atrás y se va; la de abajo sube enderezándose
-        p.folder.style.transform = `translate3d(0, ${(o * 108).toFixed(2)}%, 0) rotateX(${(-o * 24).toFixed(2)}deg) scale(${(1 - Math.min(a, 1.5) * 0.12).toFixed(4)})`;
-        // Paralaje dentro de la carpeta: la imagen viaja en sentido contrario
-        p.img.style.transform = `translate3d(0, ${(clamp(o, -1.2, 1.2) * -10).toFixed(2)}%, 0) scale(1.24)`;
+        // e: cuánto llegó la carpeta al frente · c: cuánto la tapó la siguiente
+        const e = 1 - clamp(o);
+        const c = clamp(-o);
+        const open = 1 - e;
+        // Entrada: sube desde abajo pequeña e inclinada, y crece hasta enderezarse encima de la anterior.
+        // La primera no sube: solo crece mientras el bloque entra en pantalla
+        const sube = i === 0 ? 0 : open * unidad;
+        // Salida: la siguiente la cubre; esta se va hacia atrás, se encoge, gira un poco, se desenfoca y cae en sombra
+        const giro = open * 3 - c * 2.5;
+        const escala = (0.84 + e * 0.16) * (1 - c * 0.2);
+        p.folder.style.transform = `translate3d(0, ${(sube + (open * 0.06 - c * 0.08) * unidad).toFixed(1)}px, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`;
+        p.folder.style.filter = c > 0.005 ? `blur(${(c * 7).toFixed(2)}px)` : '';
+        // Paralaje: la imagen viaja más lento que la carpeta y sigue derivando mientras está cubierta
+        p.img.style.transform = `translate3d(0, ${(open * -14 + c * 7).toFixed(2)}%, 0) scale(${(1.3 - e * 0.12).toFixed(4)})`;
         // El texto llega después que la imagen: profundidad
-        p.copy.style.transform = `translate3d(0, ${(o * 160).toFixed(1)}px, 0)`;
-        p.copy.style.opacity = clamp(1 - a * 1.6).toFixed(3);
-        p.shade.style.opacity = Math.min(a * 0.9, 0.8).toFixed(3);
-        p.folder.style.setProperty('--p', clamp(1 - a * 1.5).toFixed(3));
-        p.folder.style.setProperty('--c', clamp(a * 0.25).toFixed(3));
-        if (a < 0.2 && p.f.dataset.titulo === 'pendiente') {
+        p.copy.style.transform = `translate3d(0, ${(open * 200 - c * 90).toFixed(1)}px, 0)`;
+        p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - c * 2.2), 0).toFixed(3);
+        p.shade.style.opacity = (c * 0.8).toFixed(3);
+        p.folder.style.setProperty('--p', e.toFixed(3));
+        p.folder.style.setProperty('--c', c.toFixed(3));
+        if (o < 0.2 && o > -0.5 && p.f.dataset.titulo === 'pendiente') {
           p.f.dataset.titulo = '';
           entrarTitulo(p.f);
         }
       };
 
       let t = objetivo(), raf = 0, antes = 0;
-      const pintar = () => parts.forEach((p, i) => aplicar(p, i - t));
+      const pintar = () => parts.forEach((p, i) => aplicar(p, i - t, i));
       const frame = (now) => {
         const dt = antes ? Math.min((now - antes) / 1000, 0.05) : 1 / 60;
         antes = now;
         const meta = objetivo();
-        // Inercia independiente de los fps: alcanza el scroll en unos 300 ms
-        t += (meta - t) * (1 - Math.exp(-dt * 9));
+        // Inercia suave e independiente de los fps: alcanza el scroll en algo más de medio segundo
+        t += (meta - t) * (1 - Math.exp(-dt * 5));
         if (Math.abs(meta - t) < 0.0005) t = meta;
         pintar();
         raf = t !== meta ? requestAnimationFrame(frame) : 0;

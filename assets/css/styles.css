@@ -680,7 +680,7 @@ body::before {
   transform-origin: 50% 0%;
   will-change: transform;
 }
-/* Carrusel (con JS y movimiento): un escenario fijo donde las carpetas suben una tras otra */
+/* Apilado (con JS y movimiento): un escenario fijo donde cada carpeta sube y cubre a la anterior */
 .feature-stack.carrusel { position: relative; }
 .feature-stage {
   position: sticky; top: 0; overflow: hidden;
@@ -688,10 +688,10 @@ body::before {
 }
 .carrusel .feature {
   position: absolute; inset: 0; height: auto; min-height: 0;
-  perspective: 1800px; pointer-events: none;
+  pointer-events: none;
 }
 .carrusel .feature-inner { pointer-events: auto; }
-.carrusel .folder { transform-origin: 50% 50%; }
+.carrusel .folder { will-change: transform, filter; }
 /* Pestaña marcada: número, cliente y año */
 .folder-tab {
   position: absolute; left: 0; bottom: 100%;
