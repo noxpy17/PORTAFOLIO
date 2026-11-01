@@ -710,12 +710,9 @@ body::before {
   border-radius: 0 14px 14px 14px;
   backface-visibility: hidden;
 }
-/* La imagen vive en la sombra: solo se ve donde llega la linterna */
+/* La imagen entra ya a todo color */
 .feature-media {
   position: absolute; inset: 0; overflow: hidden; background: var(--negro);
-  --lx: 30%; --ly: 85%; --lr: 0%; --lr2: 0%;
-  -webkit-mask-image: radial-gradient(ellipse calc(var(--lr) * .62) var(--lr) at var(--lx) var(--ly), #000 0%, #000 45%, rgba(0,0,0,.04) 100%);
-          mask-image: radial-gradient(ellipse calc(var(--lr) * .62) var(--lr) at var(--lx) var(--ly), #000 0%, #000 45%, rgba(0,0,0,.04) 100%);
 }
 .feature-media img {
   width: 100%; height: 100%; object-fit: cover;

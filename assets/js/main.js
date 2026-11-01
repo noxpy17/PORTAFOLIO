@@ -238,27 +238,20 @@
       const apply = (p, hasNext) => {
         const e = suave(p.e);
         const open = 1 - e;
-        // Revelado: una linterna entra por la esquina inferior y abre la luz sobre la imagen
-        if (open > 0.002) {
-          p.media.style.setProperty('--lr', `${(e * 165).toFixed(1)}%`);
-          p.media.style.setProperty('--lx', `${(22 + e * 33).toFixed(1)}%`);
-          p.media.style.setProperty('--ly', `${(96 - e * 52).toFixed(1)}%`);
-        } else {
-          p.media.style.setProperty('--lr', '165%');
-          p.media.style.setProperty('--lx', '55%');
-          p.media.style.setProperty('--ly', '44%');
-        }
-        // Paralaje: la imagen viaja más lento que la página y sigue derivando mientras está cubierta
-        p.img.style.transform = `translate3d(0, ${p.d.toFixed(2)}%, 0) scale(${(1.2 - e * 0.1).toFixed(4)})`;
-        // El texto llega un poco después que la imagen: profundidad
-        p.copy.style.transform = `translate3d(0, ${(open * 90 - p.c * 40).toFixed(1)}px, 0)`;
+        // Paralaje marcado: la imagen viaja bastante más lento que la página y sigue derivando mientras está cubierta
+        p.img.style.transform = `translate3d(0, ${p.d.toFixed(2)}%, 0) scale(${(1.3 - e * 0.12).toFixed(4)})`;
+        // El texto llega claramente después que la imagen: profundidad
+        p.copy.style.transform = `translate3d(0, ${(open * 200 - p.c * 90).toFixed(1)}px, 0)`;
         p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - p.c * 2.2), 0).toFixed(3);
-        // Salida: el siguiente lo cubre; este se aleja, se redondea y cae en sombra
-        if (hasNext) {
-          const c = suave(p.c);
-          p.inner.style.transform = c > 0.001 ? `translate3d(0, ${(-c * 3).toFixed(2)}%, 0) scale(${(1 - c * 0.1).toFixed(4)})` : '';
-          p.shade.style.opacity = (c * 0.8).toFixed(3);
-        }
+        // Entrada: la carpeta sube inclinada y pequeña, y se endereza al asentarse.
+        // Salida: el siguiente la cubre; esta se aleja, se encoge, gira un poco y cae en sombra
+        const c = hasNext ? suave(p.c) : 0;
+        const giro = open * 3 - c * 2.5;
+        const escala = (0.84 + e * 0.16) * (1 - c * 0.2);
+        p.inner.style.transform = open > 0.001 || c > 0.001
+          ? `translate3d(0, ${(open * 6 - c * 8).toFixed(2)}%, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`
+          : '';
+        if (hasNext) p.shade.style.opacity = (c * 0.8).toFixed(3);
         p.inner.style.setProperty('--p', e.toFixed(3));
         p.inner.style.setProperty('--c', p.c.toFixed(3));
       };
@@ -278,7 +271,7 @@
           // desfasa del bloque. Solo el paralaje de la imagen lleva inercia.
           p.e = te;
           p.c = tc;
-          const td = (1 - te) * -8 + tc * 4;
+          const td = (1 - te) * -14 + tc * 7;
           if (p.d === undefined) p.d = td;
           p.d += (td - p.d) * 0.16;
           if (Math.abs(td - p.d) > 0.01) moving = true;
