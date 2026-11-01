@@ -295,8 +295,15 @@ body::before {
 }
 
 /* Nombre en Quién soy: mismo halation, bloom y desfase RGB que el titular del inicio */
+/* Cada letra sube un poco al encenderse; el nombre entero sube y se enfoca mientras se escribe */
+.nombre-tipeo .tch {
+  display: inline-block; white-space: pre;
+  transform: translateY(.35em);
+  transition: opacity .3s var(--ease), transform .55s var(--ease);
+}
+.nombre-tipeo .tch.on { transform: none; }
 .nombre-tipeo {
-  transition: filter .3s linear;   /* el desenfoque se va soltando letra a letra */
+  transition: filter .45s var(--ease), transform .45s var(--ease);
   text-shadow:
     -1.5px 0 rgba(223, 0, 247, .45),
     1.5px 0 rgba(0, 220, 255, .45),

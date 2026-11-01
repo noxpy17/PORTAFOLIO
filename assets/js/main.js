@@ -397,7 +397,11 @@
       nombre.append(l);
       return l;
     });
-    const enfoque = (k) => { nombre.style.filter = k >= 1 ? '' : `blur(${((1 - k) * 8).toFixed(2)}px)`; };
+    // Desenfoque sutil (máximo 3 px) y subida desde abajo: ambos se resuelven con la última letra
+    const enfoque = (k) => {
+      nombre.style.filter = k >= 1 ? '' : `blur(${((1 - k) * 3).toFixed(2)}px)`;
+      nombre.style.transform = k >= 1 ? '' : `translateY(${((1 - k) * 28).toFixed(1)}px)`;
+    };
     enfoque(0);
     const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
     const ioNombre = new IntersectionObserver(async (entries) => {
