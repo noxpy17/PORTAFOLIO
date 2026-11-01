@@ -285,7 +285,11 @@
         // Salida: la siguiente la cubre; esta se va hacia atrás, se encoge, gira un poco, se desenfoca y cae en sombra
         const giro = -c * 2.5;
         const escala = (0.84 + e * 0.16) * (1 - c * 0.2);
-        p.folder.style.transform = `translate3d(0, ${(sube + (open * 0.06 - c * 0.08) * unidad).toFixed(1)}px, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`;
+        // Al frente queda quieta, recta y a pantalla completa, sin ninguna transformación encima
+        const quieta = open < 0.0005 && c < 0.0005;
+        p.folder.style.transform = quieta ? '' : `translate3d(0, ${(sube + (open * 0.06 - c * 0.08) * unidad).toFixed(1)}px, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`;
+        // Las esquinas se redondean solo mientras la carpeta está en movimiento
+        p.folder.style.setProperty('--r', quieta ? '0' : Math.max(open, c).toFixed(3));
         p.folder.style.filter = c > 0.005 ? `blur(${(c * 7).toFixed(2)}px)` : '';
         // Paralaje: la imagen viaja más lento que la carpeta y sigue derivando mientras está cubierta
         p.img.style.transform = `translate3d(0, ${(open * -14 + c * 7).toFixed(2)}%, 0) scale(${(1.3 - e * 0.12).toFixed(4)})`;

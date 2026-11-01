@@ -690,7 +690,18 @@ body::before {
   position: absolute; inset: 0; height: auto; min-height: 0;
   pointer-events: none;
 }
-.carrusel .feature-inner { pointer-events: auto; }
+.carrusel .feature { padding: 0; }
+/* Al frente, la carpeta ocupa toda la pantalla; mientras se mueve, se redondea y proyecta sombra */
+.carrusel .feature-inner {
+  pointer-events: auto;
+  border: 0; border-radius: calc(var(--r, 0) * 18px);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, calc(var(--r, 0) * .7));
+}
+/* La pestaña pasa a ser una etiqueta dentro de la carpeta, bajo el encabezado */
+.carrusel .folder-tab {
+  bottom: auto; top: 96px; left: clamp(16px, 2.4vw, 40px); z-index: 4;
+  border: 1px solid var(--linea); border-radius: 10px 0 0 0;
+}
 .carrusel .folder { will-change: transform, filter; }
 /* Pestaña marcada: número, cliente y año */
 .folder-tab {
