@@ -383,6 +383,22 @@
     }
   }
 
+  // Skills: los bloques suben uno tras otro y sus herramientas aparecen después
+  const skills = document.querySelector('.skills');
+  if (skills && A && 'IntersectionObserver' in window && skills.getBoundingClientRect().top > window.innerHeight) {
+    const bloques = skills.querySelectorAll('.skill');
+    const etiquetas = skills.querySelectorAll('.tools li');
+    bloques.forEach((b) => { b.style.opacity = '0'; });
+    etiquetas.forEach((t) => { t.style.opacity = '0'; });
+    const ioSkills = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      ioSkills.disconnect();
+      A.animate(bloques, { opacity: [0, 1], translateY: [32, 0], duration: 900, ease: EASE, delay: A.stagger(140) });
+      A.animate(etiquetas, { opacity: [0, 1], translateY: [8, 0], duration: 500, ease: EASE, delay: A.stagger(45, { start: 500 }) });
+    }, { rootMargin: '0px 0px -15% 0px' });
+    ioSkills.observe(skills);
+  }
+
   // Filtros del portafolio
   const grid = document.querySelector('.work-grid');
   const chips = document.querySelectorAll('.chip');

@@ -550,6 +550,27 @@ body::before {
 }
 .services b { font: 800 1rem/1.2 var(--f-titulo); letter-spacing: .04em; text-transform: uppercase; }
 .services span { color: var(--niebla); font-size: .95rem; }
+/* Skills: un bloque por disciplina con sus herramientas como etiquetas */
+.skills {
+  display: grid; grid-template-columns: 1fr; gap: 1px;
+  background: var(--linea); border: 1px solid var(--linea); border-radius: 0 12px 12px 12px; overflow: hidden;
+}
+.skill {
+  display: grid; gap: 10px; align-content: start; padding: 22px 20px 24px;
+  background: var(--negro);
+  transition: background .5s var(--ease);
+}
+.skill:hover { background: var(--negro-2); }
+@media (min-width: 560px) { .skills { grid-template-columns: 1fr 1fr; } }
+.skill b { font: 800 1rem/1.2 var(--f-titulo); letter-spacing: .04em; text-transform: uppercase; color: var(--texto); }
+.skill > span { color: var(--niebla); font-size: .95rem; line-height: 1.45; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+.tools li {
+  padding: 6px 12px; border: 1px solid color-mix(in srgb, var(--cian) 45%, transparent); border-radius: 999px;
+  font: 500 .75rem/1 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: var(--cian);
+  transition: background .4s var(--ease), color .4s var(--ease);
+}
+.skill:hover .tools li { background: color-mix(in srgb, var(--cian) 12%, transparent); }
 
 /* ---------- Contacto ---------- */
 .contact { position: relative; overflow: hidden; isolation: isolate; border-top: 1px solid var(--linea); }
