@@ -103,6 +103,22 @@
     });
   }
 
+  // Columna de cada proyecto en la rejilla: 2 columnas desplazan la segunda; 3 columnas escalonan las tres
+  const rejilla = document.querySelector('.work-grid');
+  const tres = window.matchMedia('(min-width: 1200px)');
+  const dos = window.matchMedia('(min-width: 760px)');
+  const ordenarRejilla = () => {
+    if (!rejilla) return;
+    const cols = tres.matches ? 3 : dos.matches ? 2 : 1;
+    [...rejilla.querySelectorAll('.card')].filter((c) => !c.hidden).forEach((c, i) => {
+      c.dataset.col = String(i % cols);
+      c.classList.toggle('is-offset', cols === 2 && i % 2 === 1);
+    });
+  };
+  ordenarRejilla();
+  tres.addEventListener('change', ordenarRejilla);
+  dos.addEventListener('change', ordenarRejilla);
+
   // Revelado al hacer scroll: imágenes con máscara y destello de halo en cada sección
   if (A && 'IntersectionObserver' in window) {
     const seen = new WeakSet();
@@ -116,8 +132,10 @@
           // La tarjeta entra con un fundido de opacidad y sube un poco
           const card = el.closest('.card');
           if (card) {
+            // En la rejilla de tres, cada columna arranca un poco después: suben escalonadas
+            const retraso = (Number(card.dataset.col) || 0) * 180;
             A.animate(card, {
-              opacity: [0, 1], translateY: [28, 0], duration: 1100, ease: 'inOut(2)',
+              opacity: [0, 1], translateY: [48, 0], duration: 1100, ease: 'inOut(2)', delay: retraso,
               onComplete: () => { card.style.opacity = ''; card.style.transform = ''; },
             });
           }
@@ -126,7 +144,7 @@
           const folder = el.closest('.card-folder');
           const color = { r: -0 };
           A.animate(color, {
-            r: [0, 135], duration: 2200, ease: 'inOut(2)',
+            r: [0, 135], duration: 2200, ease: 'inOut(2)', delay: (Number(el.closest('.card')?.dataset.col) || 0) * 180,
             onUpdate: () => { img.style.setProperty('--rev', `${color.r.toFixed(1)}%`); },
             onComplete: () => {
               if (folder) folder.style.setProperty('--p', '1');
@@ -373,9 +391,7 @@
     const matches = (card, f) => f === 'todos' || card.dataset.cat.split(' ').includes(f);
     let busy = false;
 
-    const relayout = () => {
-      cards.filter((c) => !c.hidden).forEach((c, i) => c.classList.toggle('is-offset', i % 2 === 1));
-    };
+    const relayout = ordenarRejilla;
 
     const apply = (f) => {
       cards.forEach((card) => { card.hidden = !matches(card, f); });

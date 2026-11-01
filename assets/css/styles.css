@@ -428,7 +428,7 @@ body::before {
 .chip[aria-pressed="true"] { color: var(--negro); background: var(--cian); border-color: var(--cian); }
 .chip sup { font-size: .7em; margin-left: 3px; opacity: .7; }
 
-/* Rejilla de trabajos: dos columnas, la segunda desplazada */
+/* Rejilla de trabajos: dos columnas con la segunda desplazada; tres escalonadas en pantalla completa */
 .work-grid {
   display: grid; grid-template-columns: 1fr; gap: 48px;
   list-style: none; margin: 0; padding: 0;
@@ -436,6 +436,12 @@ body::before {
 @media (min-width: 760px) {
   .work-grid { grid-template-columns: 1fr 1fr; column-gap: clamp(24px, 4vw, 64px); row-gap: 72px; padding-bottom: 96px; }
   .work-grid .card.is-offset { margin-top: 96px; margin-bottom: -96px; }
+}
+/* Pantalla completa: tres columnas escalonadas, cada una más abajo que la anterior */
+@media (min-width: 1200px) {
+  .work-grid { grid-template-columns: repeat(3, 1fr); column-gap: clamp(24px, 2.4vw, 48px); padding-bottom: 176px; }
+  .work-grid .card[data-col="1"] { margin-top: 88px; margin-bottom: -88px; }
+  .work-grid .card[data-col="2"] { margin-top: 176px; margin-bottom: -176px; }
 }
 .card a { display: grid; gap: 16px; text-decoration: none; }
 .card figure {
