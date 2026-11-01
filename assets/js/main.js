@@ -383,6 +383,40 @@
     }
   }
 
+  // Nombre en Quién soy: se escribe a máquina como el titular del inicio y se enfoca al terminar
+  const nombre = document.querySelector('.nombre-tipeo');
+  if (nombre && A && 'IntersectionObserver' in window && nombre.getBoundingClientRect().top > window.innerHeight) {
+    const texto = nombre.textContent.trim();
+    nombre.setAttribute('aria-label', texto);
+    nombre.textContent = '';
+    const letras = [...texto].map((ch) => {
+      const l = document.createElement('span');
+      l.className = 'tch';
+      l.setAttribute('aria-hidden', 'true');
+      l.textContent = ch;
+      nombre.append(l);
+      return l;
+    });
+    const enfoque = (k) => { nombre.style.filter = k >= 1 ? '' : `blur(${((1 - k) * 8).toFixed(2)}px)`; };
+    enfoque(0);
+    const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+    const ioNombre = new IntersectionObserver(async (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      ioNombre.disconnect();
+      // Ritmo humano, no metrónomo: más pausa en los espacios
+      for (let i = 0; i < letras.length; i++) {
+        if (i > 0) letras[i - 1].classList.remove('cursor');
+        letras[i].classList.add('on', 'cursor');
+        enfoque((i + 1) / letras.length);
+        const ch = letras[i].textContent;
+        await esperar(70 * (0.6 + Math.random() * 0.8) + (ch === ' ' ? 90 : 0));
+      }
+      await esperar(900);
+      letras[letras.length - 1].classList.remove('cursor');
+    }, { rootMargin: '0px 0px -20% 0px' });
+    ioNombre.observe(nombre);
+  }
+
   // Qué puedo hacer por ti: los bloques suben uno tras otro y sus herramientas aparecen después
   const skills = document.querySelector('.skills');
   if (skills && A && 'IntersectionObserver' in window && skills.getBoundingClientRect().top > window.innerHeight) {

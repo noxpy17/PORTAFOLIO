@@ -294,6 +294,17 @@ body::before {
   }
 }
 
+/* Nombre en Quién soy: mismo halation, bloom y desfase RGB que el titular del inicio */
+.nombre-tipeo {
+  transition: filter .3s linear;   /* el desenfoque se va soltando letra a letra */
+  text-shadow:
+    -1.5px 0 rgba(223, 0, 247, .45),
+    1.5px 0 rgba(0, 220, 255, .45),
+    0 0 1px rgba(255, 140, 90, .55),
+    0 0 14px rgba(255, 255, 255, .28),
+    0 0 42px rgba(160, 170, 255, .22);
+}
+
 /* Escritura a máquina: cada letra ya ocupa su lugar, solo se enciende */
 .tch { opacity: 0; }
 .tch.on { opacity: 1; }
