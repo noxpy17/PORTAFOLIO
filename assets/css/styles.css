@@ -677,18 +677,14 @@ body::before {
 .red-usuario { grid-column: 1; grid-row: 2; font: 500 var(--step--1)/1.3 var(--f-texto); letter-spacing: .08em; text-transform: uppercase; color: var(--niebla); }
 .red-flecha { grid-column: 2; grid-row: 1 / span 2; align-self: start; font-size: 1.4rem; color: var(--cian); transition: transform .5s var(--ease); }
 .redes a:hover .red-flecha, .redes a:focus-visible .red-flecha { transform: translate(4px, -4px); }
-.contact-lines { display: grid; border-top: 1px solid var(--linea); }
-.contact-line {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;
-  padding-block: 20px; border-bottom: 1px solid var(--linea);
+/* Contacto: sin datos a la vista, solo dos botones que llevan a WhatsApp o al correo */
+.contact-botones { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn--grande { padding: 18px 28px; font-size: 1rem; }
+.btn--grande span { transition: transform .5s var(--ease); }
+.btn--grande:hover span, .btn--grande:focus-visible span { transform: translate(3px, -3px); }
+@media (max-width: 560px) {
+  .contact-botones .btn { flex: 1 1 100%; justify-content: center; }
 }
-.contact-line .value {
-  font: 700 var(--step-2)/1.15 var(--f-titulo); letter-spacing: .02em;
-  text-decoration: none; overflow-wrap: anywhere; min-width: 0;
-  transition: color .4s var(--ease);
-}
-.contact-line .value:hover { color: var(--cian); }
-.contact-line .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ---------- Pie ---------- */
 .site-footer .wrap {
