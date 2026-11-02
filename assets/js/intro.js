@@ -35,6 +35,7 @@
   }
   const arrancarN = () => {
     delete hero.dataset.esperaN;
+    hero.classList.add('n-viva');   // arranca también el halo pre-calculado
     if (!llama || !llama.unpauseAnimations) return;
     llama.setCurrentTime(0);
     animacionesN.forEach((a) => { a.currentTime = 0; a.play(); });
