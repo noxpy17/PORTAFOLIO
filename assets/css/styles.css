@@ -811,12 +811,13 @@ body::before {
   background: var(--negro);
 }
 .carrusel .folder.en-movimiento .feature-inner { border-radius: 18px; }
-/* Filo oscuro encima del borde de la foto: al escalar la carpeta, el recorte deja una columna de píxeles
-   de la foto sin oscurecer (se veía como una línea clara a la izquierda); este filo la tapa */
-.carrusel .feature-inner::after {
-  content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none;
-  border: 2px solid var(--negro); border-radius: inherit; transform: translateZ(0);
+/* Marco oscuro sobre el borde de la carpeta, por dentro y por fuera: al escalar la carpeta, la foto (que va en
+   su propia capa) se asoma un píxel fuera del recorte y se veía como una línea clara; este marco la tapa */
+.carrusel .folder::after {
+  content: ""; position: absolute; inset: -2px; z-index: 3; pointer-events: none;
+  border: 4px solid var(--negro); border-radius: 2px; transform: translateZ(0);
 }
+.carrusel .folder.en-movimiento::after { border-radius: 20px; }
 .folder-sombra {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
   border-radius: 18px; box-shadow: 0 -24px 60px rgba(0, 0, 0, .7);
