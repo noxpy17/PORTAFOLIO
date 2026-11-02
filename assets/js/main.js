@@ -13,15 +13,17 @@
     const img = ctx.createImageData(180, 180);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = Math.random() * 255;
-      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
-      img.data[i + 3] = 255;
+      // Blanco con transparencia: sobre el fondo da el mismo resultado que el modo "screen",
+      // sin obligar al navegador a fusionar toda la página en cada cuadro
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = 255;
+      img.data[i + 3] = v;
     }
     ctx.putImageData(img, 0, 0);
     grain.style.backgroundImage = `url(${c.toDataURL()})`;
     document.querySelectorAll('.hero-grain').forEach((g) => { g.style.backgroundImage = grain.style.backgroundImage; });
     if (!reduceMotion) {
       setInterval(() => {
-        grain.style.backgroundPosition = `${Math.random() * 180}px ${Math.random() * 180}px`;
+        grain.style.transform = `translate3d(${(Math.random() * 180 - 90).toFixed(0)}px, ${(Math.random() * 180 - 90).toFixed(0)}px, 0)`;
       }, 90);
     }
   }
@@ -54,6 +56,18 @@
       hero.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
       hero.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
     });
+  }
+
+  // Portada fuera de pantalla: se pausan sus animaciones (llama, brillos, glitch) para no gastar en lo que no se ve
+  if (hero && 'IntersectionObserver' in window) {
+    const llama = hero.querySelector('.hero-llama svg');
+    new IntersectionObserver(([entry]) => {
+      const fuera = !entry.isIntersecting;
+      hero.classList.toggle('fuera', fuera);
+      if (llama && llama.pauseAnimations) {
+        if (fuera) llama.pauseAnimations(); else llama.unpauseAnimations();
+      }
+    }).observe(hero);
   }
 
   // Linterna sobre el sujeto de la portada: sigue al cursor con inercia; sin cursor,
@@ -260,14 +274,31 @@
 
     if (carrusel) {
       const N = features.length;
-      const parts = features.map((f) => ({
-        f,
-        folder: f.querySelector('.folder'),
-        img: f.querySelector('.feature-media img'),
-        copy: f.querySelector('.feature-copy'),
-        shade: f.querySelector('.feature-shade'),
-        lejos: false,
-      }));
+      const parts = features.map((f) => {
+        const folder = f.querySelector('.folder');
+        const img = f.querySelector('.feature-media img');
+        // Foto desenfocada pre-calculada: se funde con opacidad en vez de desenfocar en vivo
+        const blur = document.createElement('img');
+        blur.className = 'feature-blur';
+        blur.alt = '';
+        blur.setAttribute('aria-hidden', 'true');
+        blur.decoding = 'async';
+        blur.src = img.getAttribute('src').replace('assets/img/', 'assets/img/desenfoque/');
+        blur.style.cssText = img.style.cssText;
+        img.after(blur);
+        // Sombra de la carpeta en su propia capa: solo cambia su opacidad
+        const sombra = document.createElement('div');
+        sombra.className = 'folder-sombra';
+        sombra.setAttribute('aria-hidden', 'true');
+        folder.prepend(sombra);
+        return {
+          f, folder, img, blur, sombra,
+          tab: f.querySelector('.folder-tab'),
+          copy: f.querySelector('.feature-copy'),
+          shade: f.querySelector('.feature-shade'),
+          lejos: false, moviendo: false,
+        };
+      });
       // Pausas (en pantallas) antes de la primera carpeta y después de la última
       const INICIO = 0.3, FINAL = 0.4;
       // Entre carpeta y carpeta: una pausa corta y luego el paso con ease-in-out
@@ -309,17 +340,22 @@
         // Al frente queda quieta, recta y a pantalla completa, sin ninguna transformación encima
         const quieta = open < 0.0005 && c < 0.0005;
         p.folder.style.transform = quieta ? '' : `translate3d(0, ${(sube + (open * 0.06 - c * 0.08) * unidad).toFixed(1)}px, 0) scale(${escala.toFixed(4)}) rotate(${giro.toFixed(2)}deg)`;
-        // Las esquinas se redondean solo mientras la carpeta está en movimiento
-        p.folder.style.setProperty('--r', quieta ? '0' : Math.max(open, c).toFixed(3));
-        p.folder.style.filter = c > 0.005 ? `blur(${(c * 7).toFixed(2)}px)` : '';
+        // Las esquinas se redondean solo mientras la carpeta está en movimiento (cambia una vez, no en cada cuadro)
+        if (p.moviendo === quieta) { p.moviendo = !quieta; p.folder.classList.toggle('en-movimiento', !quieta); }
+        p.sombra.style.opacity = Math.max(open, c).toFixed(3);
         // Paralaje: la imagen viaja más lento que la carpeta y sigue derivando mientras está cubierta
-        p.img.style.transform = `translate3d(0, ${(open * -11 + c * 3).toFixed(2)}%, 0) scale(${(1.24 - e * 0.16).toFixed(4)})`;
+        const foto = `translate3d(0, ${(open * -11 + c * 3).toFixed(2)}%, 0) scale(${(1.24 - e * 0.16).toFixed(4)})`;
+        p.img.style.transform = foto;
+        // Desenfoque: la versión borrosa aparece a medida que la siguiente la cubre
+        p.blur.style.opacity = Math.min(c * 1.4, 1).toFixed(3);
+        if (c > 0.001) p.blur.style.transform = foto;
         // El texto llega después que la imagen: profundidad
         p.copy.style.transform = `translate3d(0, ${(open * 200 - c * 90).toFixed(1)}px, 0)`;
-        p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - c * 2.2), 0).toFixed(3);
+        p.copy.style.opacity = Math.max(Math.min(e * 1.6 - 0.4, 1 - c * 3.2), 0).toFixed(3);   // al irse atrás, el texto se apaga antes de que la foto se desenfoque
         p.shade.style.opacity = (c * 0.8).toFixed(3);
-        p.folder.style.setProperty('--p', e.toFixed(3));
-        p.folder.style.setProperty('--c', c.toFixed(3));
+        // Pestaña: la línea cian se enciende al llegar y la pestaña se apaga cuando la cubren
+        p.tab.style.setProperty('--p', e.toFixed(3));
+        p.tab.style.opacity = Math.max(1 - c * 3, 0).toFixed(3);
         if (o < 0.2 && o > -0.5 && p.f.dataset.titulo === 'pendiente') {
           p.f.dataset.titulo = '';
           entrarTitulo(p.f);

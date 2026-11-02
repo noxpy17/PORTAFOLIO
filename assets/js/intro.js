@@ -173,7 +173,7 @@
       }
       await esperar(350);
       i = (i + 1) % lineas.length;
-      while (document.hidden) await esperar(500);
+      while (document.hidden || hero.classList.contains('fuera')) await esperar(500);
     }
   }
 })();

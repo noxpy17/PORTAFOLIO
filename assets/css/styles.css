@@ -48,9 +48,10 @@ a { color: inherit; }
 
 /* Grano: constante en todo el sitio */
 .grain {
-  position: fixed; inset: 0; z-index: 30; pointer-events: none;
-  opacity: .056; mix-blend-mode: screen;   /* 30% más suave que el .08 original */
+  position: fixed; inset: -180px; z-index: 30; pointer-events: none;
+  opacity: .056;   /* 30% más suave que el .08 original */
   background-size: 180px 180px;
+  will-change: transform;   /* se mueve a saltos con transform: la tarjeta gráfica lo desplaza sin redibujar */
 }
 
 .wrap {
@@ -239,10 +240,14 @@ body::before {
   .hero-marca-luz { animation: desfase 7s steps(1) infinite 1.3s; }
 }
 
+/* Cuando la portada sale de pantalla sus animaciones se pausan; al volver siguen donde iban */
+.hero.fuera, .hero.fuera * { animation-play-state: paused !important; }
+
 /* Grano propio del hero: entre la escena y el texto, nunca encima del texto */
 .hero-grain {
   position: absolute; inset: -50%; z-index: 0; pointer-events: none;
-  opacity: .063; mix-blend-mode: screen; background-size: 180px 180px;   /* 30% más suave que el .09 original */
+  opacity: .063; background-size: 180px 180px;   /* 30% más suave que el .09 original */
+  will-change: transform;
 }
 @media (prefers-reduced-motion: no-preference) {
   .hero-grain { animation: grano .8s steps(5) infinite; }
@@ -772,19 +777,21 @@ body::before {
   pointer-events: none;
 }
 .carrusel .feature { padding: var(--hdr, 84px) 0 0; }
-/* Al frente, la carpeta ocupa toda la pantalla bajo el encabezado; mientras se mueve, se redondea y proyecta sombra */
-.carrusel .folder {
-  will-change: transform, filter;
-  border-radius: calc(var(--r, 0) * 18px);
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, calc(var(--r, 0) * .7));
-}
-/* El recorte con clip-path evita que asome un filo claro en los bordes mientras la carpeta se mueve */
+/* Al frente, la carpeta ocupa toda la pantalla bajo el encabezado; mientras se mueve, se redondea y proyecta sombra.
+   Todo lo que cambia cuadro a cuadro es transform u opacity: la tarjeta gráfica lo mueve sin redibujar la página */
 .carrusel .feature-inner {
   pointer-events: auto;
-  border: 0; border-radius: 0; overflow: visible;
-  clip-path: inset(0 round calc(var(--r, 0) * 18px));
+  border: 0; border-radius: 0; overflow: hidden;
   background: var(--negro);
 }
+.carrusel .folder.en-movimiento .feature-inner { border-radius: 18px; }
+.folder-sombra {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: 18px; box-shadow: 0 -24px 60px rgba(0, 0, 0, .7);
+  opacity: 0; will-change: opacity;
+}
+/* Versión desenfocada de la foto (pre-calculada): aparece con opacidad cuando la carpeta se va hacia atrás */
+.feature-media .feature-blur { position: absolute; inset: 0; opacity: 0; }
 /* La pestaña cuelga del borde superior de la carpeta y viaja pegada a él */
 .carrusel .folder-tab {
   top: 0; bottom: auto; left: clamp(16px, 2.4vw, 40px); z-index: 4;
@@ -841,14 +848,14 @@ body::before {
 }
 /* Penumbra del proyecto que queda debajo: crece desde arriba, donde cae el siguiente */
 .feature-shade {
-  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0;
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; will-change: opacity;
   background: linear-gradient(to bottom, rgba(0, 0, 0, .55), rgba(0, 0, 0, .9));
 }
 .feature-copy {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
   display: grid; gap: 18px;
   padding-block: 0 clamp(32px, 6vw, 72px);
-  will-change: transform;
+  will-change: transform, opacity;
 }
 .feature-index span { color: var(--cian); }
 .feature-title {
