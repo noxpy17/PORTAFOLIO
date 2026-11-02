@@ -221,11 +221,19 @@ body::before {
   .hero-marca img { width: 40.5vw; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  /* Entra desde la bruma: sube un poco y se enfoca */
-  .hero-marca { animation: marca-entra 1.6s var(--ease) .2s both; }
-  @keyframes marca-entra {
-    from { opacity: 0; transform: translateY(18px); filter: blur(6px); }
-    to { opacity: 1; transform: none; filter: none; }
+  /* Entra con un glitch rápido: cortes horizontales, saltos y desfase RGB marcado */
+  .hero-marca { animation: marca-glitch .7s steps(1) .3s both; }
+  @keyframes marca-glitch {
+    0% { opacity: 0; }
+    8% { opacity: 1; transform: translateX(-14px) skewX(-10deg); clip-path: inset(42% 0 40% 0); filter: drop-shadow(-7px 0 #df00f7) drop-shadow(7px 0 #00edff); }
+    18% { opacity: 1; transform: translateX(12px); clip-path: inset(8% 0 68% 0); filter: drop-shadow(6px 0 #df00f7) drop-shadow(-6px 0 #00edff); }
+    28% { opacity: .35; transform: translateX(-6px) skewX(8deg); clip-path: inset(62% 0 6% 0); }
+    38% { opacity: 1; transform: translateX(5px); clip-path: inset(0 0 48% 0); filter: drop-shadow(-4px 0 #df00f7) drop-shadow(4px 0 #00edff); }
+    46% { opacity: 0; }
+    54% { opacity: 1; transform: translateX(-3px); clip-path: inset(24% 0 18% 0); filter: drop-shadow(3px 0 #df00f7) drop-shadow(-3px 0 #00edff); }
+    66% { opacity: 1; transform: translateX(2px); clip-path: inset(0); filter: drop-shadow(-2px 0 #df00f7) drop-shadow(2px 0 #00edff); }
+    76% { opacity: .6; transform: none; }
+    86%, 100% { opacity: 1; transform: none; clip-path: inset(0); filter: none; }
   }
   /* Y salta de vez en cuando como el titular: un fallo de proyección */
   .hero-marca-luz { animation: desfase 7s steps(1) infinite 1.3s; }
