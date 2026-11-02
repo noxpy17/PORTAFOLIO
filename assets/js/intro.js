@@ -24,6 +24,23 @@
   const letras = prepararTitular();
   hero.querySelectorAll('[data-intro]').forEach((el) => { el.style.opacity = '0'; });
 
+  // La N espera su turno: su animación (SVG y CSS) queda congelada en el instante 0 hasta que entre
+  const llama = hero.querySelector('.hero-llama svg');
+  const animacionesN = llama ? llama.getAnimations({ subtree: true }) : [];
+  if (llama && llama.pauseAnimations) {
+    hero.dataset.esperaN = '1';
+    llama.pauseAnimations();
+    llama.setCurrentTime(0);
+    animacionesN.forEach((a) => { a.pause(); a.currentTime = 0; });
+  }
+  const arrancarN = () => {
+    delete hero.dataset.esperaN;
+    if (!llama || !llama.unpauseAnimations) return;
+    llama.setCurrentTime(0);
+    animacionesN.forEach((a) => { a.currentTime = 0; a.play(); });
+    if (!hero.classList.contains('fuera')) llama.unpauseAnimations();
+  };
+
   // La intro del logo en la bruma (WebGL) queda en pausa mientras la portada es una imagen fija.
   // Para volver a activarla: INTRO_ACTIVA = true y cargar de nuevo assets/js/hero-bruma.js en index.html.
   const INTRO_ACTIVA = false;
@@ -128,16 +145,28 @@
     }
   }
 
+  // Orden de entrada: PORTAFOLIO (glitch, CSS) → la N → Dirección de arte… → titular a máquina → manifiesto y botones
   async function entrarHero(delay) {
     await esperar(delay);
     const [linea1, ...luz] = letras;
-    // El resto de la portada entra de una vez, mientras el titular se escribe
-    A.animate(hero.querySelectorAll('[data-intro]'), {
-      opacity: [0, 1], translateY: [12, 0], duration: 700, delay: A.stagger(140, { start: 250 }), ease: EASE,
+    const entrar = (sel) => A.animate(hero.querySelectorAll(sel), {
+      opacity: [0, 1], translateY: [12, 0], duration: 700, delay: A.stagger(140), ease: EASE,
     });
-    // Respaldo: si algo frena la escritura, a los 6 s el titular queda completo
-    setTimeout(() => { letras.flat().forEach((c) => c.classList.add('on')); }, 6000);
-    // Lento donde pesa…
+    // Respaldo: si algo frena la secuencia, a los 9 s todo queda visible
+    setTimeout(() => {
+      letras.flat().forEach((c) => c.classList.add('on'));
+      hero.querySelectorAll('[data-intro]').forEach((el) => { if (el.style.opacity === '0') el.style.opacity = ''; });
+      if (hero.dataset.esperaN) arrancarN();
+    }, 9000);
+    // 1. PORTAFOLIO entra solo con su glitch (0,05 s a 0,75 s)
+    await esperar(850);
+    // 2. La N: parpadeo, chispa y estallido de la llama
+    arrancarN();
+    await esperar(1500);
+    // 3. Dirección de arte · Ilustración · Motion graphics
+    entrar('.hero-eyebrow[data-intro]');
+    await esperar(550);
+    // 4. El titular, a máquina: lento donde pesa…
     await escribir(linea1, 55);
     await esperar(350);
     linea1[linea1.length - 1].classList.remove('cursor');
@@ -146,9 +175,11 @@
       await escribir(luz[i], 32);
       if (i < luz.length - 1) { await esperar(160); luz[i][luz[i].length - 1].classList.remove('cursor'); }
     }
-    await esperar(900);
+    await esperar(500);
     const ultima = luz[luz.length - 1];
     ultima[ultima.length - 1].classList.remove('cursor');
+    // 5. Pienso antes de producir… y los botones
+    entrar('.manifiesto[data-intro], .hero-foot[data-intro]');
     maquinaManifiesto();
   }
 

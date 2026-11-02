@@ -65,7 +65,8 @@
       const fuera = !entry.isIntersecting;
       hero.classList.toggle('fuera', fuera);
       if (llama && llama.pauseAnimations) {
-        if (fuera) llama.pauseAnimations(); else llama.unpauseAnimations();
+        // Mientras la portada espera su turno para la N (ver intro.js), no se arranca aquí
+        if (fuera) llama.pauseAnimations(); else if (!hero.dataset.esperaN) llama.unpauseAnimations();
       }
     }).observe(hero);
   }

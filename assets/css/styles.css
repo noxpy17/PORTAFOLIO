@@ -223,7 +223,7 @@ body::before {
 }
 @media (prefers-reduced-motion: no-preference) {
   /* Entra con un glitch rápido: cortes horizontales, saltos y desfase RGB marcado */
-  .hero-marca { animation: marca-glitch .7s steps(1) .3s both; }
+  .hero-marca { animation: marca-glitch .7s steps(1) .05s both; }   /* lo primero que entra en la portada */
   @keyframes marca-glitch {
     0% { opacity: 0; }
     8% { opacity: 1; transform: translateX(-14px) skewX(-10deg); clip-path: inset(42% 0 40% 0); filter: drop-shadow(-7px 0 #df00f7) drop-shadow(7px 0 #00edff); }
