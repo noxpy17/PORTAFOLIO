@@ -49,7 +49,7 @@ a { color: inherit; }
 /* Grano: constante en todo el sitio */
 .grain {
   position: fixed; inset: 0; z-index: 30; pointer-events: none;
-  opacity: .08; mix-blend-mode: screen;
+  opacity: .056; mix-blend-mode: screen;   /* 30% más suave que el .08 original */
   background-size: 180px 180px;
 }
 
@@ -203,7 +203,7 @@ body::before {
 /* Grano propio del hero: entre la escena y el texto, nunca encima del texto */
 .hero-grain {
   position: absolute; inset: -50%; z-index: 0; pointer-events: none;
-  opacity: .09; mix-blend-mode: screen; background-size: 180px 180px;
+  opacity: .063; mix-blend-mode: screen; background-size: 180px 180px;   /* 30% más suave que el .09 original */
 }
 @media (prefers-reduced-motion: no-preference) {
   .hero-grain { animation: grano .8s steps(5) infinite; }
