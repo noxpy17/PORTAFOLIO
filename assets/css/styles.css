@@ -811,6 +811,12 @@ body::before {
   background: var(--negro);
 }
 .carrusel .folder.en-movimiento .feature-inner { border-radius: 18px; }
+/* Filo oscuro encima del borde de la foto: al escalar la carpeta, el recorte deja una columna de píxeles
+   de la foto sin oscurecer (se veía como una línea clara a la izquierda); este filo la tapa */
+.carrusel .feature-inner::after {
+  content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  border: 2px solid var(--negro); border-radius: inherit; transform: translateZ(0);
+}
 .folder-sombra {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
   border-radius: 18px; box-shadow: 0 -24px 60px rgba(0, 0, 0, .7);
@@ -866,7 +872,9 @@ body::before {
 }
 /* Sombra para leer el texto: solo negro, ninguna textura encima del texto */
 .feature-media::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
+  /* Un poco más grande que la foto y en su propia capa: así el recorte de la tarjeta gráfica no deja
+     un filo de foto sin oscurecer en los bordes mientras la carpeta se mueve */
+  content: ""; position: absolute; inset: -3px; pointer-events: none; transform: translateZ(0);
   background:
     linear-gradient(to top, var(--negro) 0%, color-mix(in srgb, var(--negro) 72%, transparent) 26%, color-mix(in srgb, var(--negro) 20%, transparent) 55%, transparent 75%),
     linear-gradient(to right, color-mix(in srgb, var(--negro) 60%, transparent), transparent 58%),
@@ -874,7 +882,7 @@ body::before {
 }
 /* Penumbra del proyecto que queda debajo: crece desde arriba, donde cae el siguiente */
 .feature-shade {
-  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; will-change: opacity;
+  position: absolute; inset: -3px; z-index: 3; pointer-events: none; opacity: 0; will-change: opacity;
   background: linear-gradient(to bottom, rgba(0, 0, 0, .55), rgba(0, 0, 0, .9));
 }
 .feature-copy {
