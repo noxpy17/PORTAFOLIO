@@ -450,15 +450,35 @@ body::before {
 .btn--solid:hover { background: var(--blanco); border-color: var(--blanco); color: var(--negro); box-shadow: 0 0 32px color-mix(in srgb, var(--cian) 45%, transparent); }
 
 /* ---------- Clientes ---------- */
-.clients { border-block: 1px solid var(--linea); background: var(--negro); }
-.clients .wrap {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 32px;
-  padding-block: 22px;
+.clients {
+  border-block: 1px solid var(--linea); background: var(--negro);
+  display: grid; gap: 14px; padding-block: 20px 22px;
 }
-.clients ul { display: contents; list-style: none; }
-.clients li {
+.clients-titulo { margin: 0; text-align: center; font-size: .7rem; color: var(--niebla); }
+/* Cinta: las agencias pasan de derecha a izquierda y se difuminan al entrar y al salir */
+.clients-cinta {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+}
+.clients-pista { display: flex; width: max-content; margin: 0; padding: 0; list-style: none; }
+.clients-pista li {
+  position: relative; padding-inline: clamp(24px, 3vw, 44px);
   font: 800 var(--step-1)/1.2 var(--f-titulo); letter-spacing: .03em; text-transform: uppercase;
-  color: var(--niebla);
+  color: var(--niebla); white-space: nowrap;
+}
+/* Barrita que divide cada agencia */
+.clients-pista li::after {
+  content: ""; position: absolute; right: 0; top: 50%; width: 1px; height: .9em;
+  background: color-mix(in srgb, var(--cian) 55%, transparent); transform: translateY(-50%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .clients-pista.en-marcha { animation: cinta var(--duracion, 30s) linear infinite; will-change: transform; }
+  .clients-cinta:hover .clients-pista { animation-play-state: paused; }
+  @keyframes cinta { to { transform: translate3d(-50%, 0, 0); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clients-pista { flex-wrap: wrap; justify-content: center; width: auto; }
 }
 
 /* ---------- Secciones ---------- */

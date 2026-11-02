@@ -58,6 +58,19 @@
     });
   }
 
+  // Agencias: se repiten hasta llenar dos anchos de pantalla, así la cinta corre sin cortes
+  const pista = document.querySelector('.clients-pista');
+  if (pista && !reduceMotion) {
+    const base = [...pista.children];
+    const grupo = () => base.forEach((li) => { const c = li.cloneNode(true); c.setAttribute('aria-hidden', 'true'); pista.append(c); });
+    // Primera mitad: tantas repeticiones como hagan falta para cubrir la pantalla; la segunda mitad es idéntica
+    while (pista.scrollWidth < window.innerWidth * 1.2) grupo();
+    const mitad = pista.children.length;
+    for (let i = 0; i < mitad; i++) { const c = pista.children[i].cloneNode(true); c.setAttribute('aria-hidden', 'true'); pista.append(c); }
+    pista.style.setProperty('--duracion', `${Math.round(pista.scrollWidth / 2 / 60)}s`);   // unos 60 px por segundo
+    pista.classList.add('en-marcha');
+  }
+
   // Portada fuera de pantalla: se pausan sus animaciones (llama, brillos, glitch) para no gastar en lo que no se ve
   if (hero && 'IntersectionObserver' in window) {
     const llama = hero.querySelector('.hero-llama svg');
