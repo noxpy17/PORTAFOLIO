@@ -3,8 +3,8 @@
 //   lento de cámara (el empuje y el paralaje los hace CSS, sin redibujar).
 // - Gradación teal & orange: sombras verde azulado, luces y pieles naranja, con bloom en las luces altas.
 // - Cortes con glitch VHS: líneas de barrido, temblor vertical, banda de tracking, sangrado de color y ruido.
-// - Hover: el cursor deja una estela que arrastra la imagen en la dirección del movimiento y la tiñe
-//   con un mapa de color cian → amarillo → magenta, como una exposición larga; la estela se desvanece sola.
+// - Hover: el cursor estira la imagen en la dirección del movimiento (azul del lado de la foto, naranja
+//   hacia donde se estira) y la imagen vuelve sola a su lugar en unos segundos.
 // Sin WebGL, las fotos se muestran con un oscurecido simple.
 (() => {
   const hero = document.querySelector('.hero');
@@ -59,30 +59,36 @@
       c = gradar(c);
       // Bloom: luces altas pre-desenfocadas, con la misma gradación
       c += gradar(texture2D(uBloom, q).rgb) * .55;
-      // Estela del cursor: arrastre direccional (exposición larga) con mapa de color cian → amarillo → magenta
-      vec4 e = texture2D(uEstela, vec2(v.x, 1. - v.y));   // misma orientación que el lienzo de la estela
-      float k = smoothstep(.02, .38, e.r);
+      // Estela del cursor: estira la foto en la dirección del movimiento (los píxeles se arrastran desde
+      // atrás) y se relaja sola en unos segundos. Del lado de la foto se enfría a azul; hacia donde se
+      // estira se calienta a naranja, con el rojo y el azul separados como en una exposición larga.
+      // Estela suavizada (9 muestras) para que el estiramiento no quede dentado
+      vec2 ue = vec2(v.x, 1. - v.y), px = vec2(2.2 / 240., 2.2 / 135.);   // misma orientación que el lienzo de la estela
+      vec4 e = vec4(0.);
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) e += texture2D(uEstela, ue + vec2(float(i), float(j)) * px);
+      e /= 9.;
+      float k = smoothstep(.02, .45, e.r);
       if (k > .001) {
         vec2 dir = (e.gb - .5) * 2.;
         dir = length(dir) > .02 ? normalize(dir) : vec2(1., 0.);
-        vec2 paso = -dir * vec2(uRes.y / uRes.x, 1.) * .028 * k;   // hacia atrás del movimiento
-        // Cada muestra de la estela toma color según su luz y lo lejos que quedó: cerca del sujeto magenta,
-        // luego amarillo y, en la cola, cian que se aclara hasta casi blanco
-        vec3 suma = vec3(0.), nitida = vec3(0.);
-        for (int i = 0; i < 10; i++) {
-          float f = float(i) / 9.;
-          vec3 m = texture2D(uTex, cubrir(uv + paso * f * 6.)).rgb;
-          float t = clamp(dot(m, vec3(.299, .587, .114)) * .7 + f * .5, 0., 1.);
-          vec3 mapa = t < .25 ? mix(vec3(.24, .14, .2), vec3(.93, .12, .72), t / .25)
-                    : t < .5 ? mix(vec3(.93, .12, .72), vec3(1., .8, .2), (t - .25) / .25)
-                    : t < .78 ? mix(vec3(1., .8, .2), vec3(.3, .85, .97), (t - .5) / .28)
-                    : mix(vec3(.3, .85, .97), vec3(.94, .97, .97), (t - .78) / .22);
-          if (i == 0) nitida = mapa;
-          suma += mapa;
+        // Desplazamiento: cada píxel toma la foto que quedó atrás; como la fuerza varía dentro de la estela,
+        // la imagen se estira (no se emborrona). Unas pocas muestras cercanas dan el barrido suave
+        vec2 atras = -dir * vec2(uRes.y / uRes.x, 1.) * .3 * k * k;
+        vec3 suma = vec3(0.);
+        for (int i = 0; i < 6; i++) {
+          float f = .72 + float(i) / 5. * .28;
+          vec2 o = atras * f;
+          suma.r += texture2D(uTex, cubrir(uv + o * 1.06)).r;
+          suma.g += texture2D(uTex, cubrir(uv + o)).g;
+          suma.b += texture2D(uTex, cubrir(uv + o * .94)).b;
         }
-        // La foto conserva su detalle (mapa de color nítido) y la estela se suma como arrastre
-        vec3 trazo = max(nitida * .9, suma / 10.);
-        c = mix(c, trazo, k);
+        vec3 estirada = gradar(suma / 6.);
+        // Color de la referencia: azul frío donde apenas se estira, naranja cálido donde más se arrastra
+        float l = dot(estirada, vec3(.299, .587, .114));
+        vec3 frio = vec3(.1, .5, 1.) * (.25 + l * 1.5);
+        vec3 calido = vec3(1., .52, .14) * (.25 + l * 1.7);
+        vec3 tono = mix(frio, calido, smoothstep(.25, .9, k));
+        c = mix(c, mix(estirada, tono, .42 * smoothstep(.2, .8, k)), k);   // el tono solo donde más se estira: bordes limpios
       }
       // VHS: líneas de barrido (siempre, muy suaves), ruido y desteñido en la banda
       c *= .965 + .035 * sin(v.y * uRes.y * 1.6);
@@ -176,9 +182,9 @@
   // Estela del cursor: un lienzo pequeño (se estira en la tarjeta gráfica) donde el cursor pinta manchas suaves.
   // Rojo = intensidad; verde/azul = dirección del movimiento. Cada cuadro se desvanece un poco.
   const estela = document.createElement('canvas');
-  estela.width = 160; estela.height = 90;
+  estela.width = 240; estela.height = 135;
   const ectx = estela.getContext('2d');
-  ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 160, 90);
+  ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 240, 135);
   let estelaTex = null, estelaViva = 0;
   if (gl) {
     estelaTex = gl.createTexture();
@@ -196,7 +202,7 @@
     const fuerza = Math.min(1, v / 900);
     for (let i = 1; i <= pasos; i++) {
       const x = x0 + (x1 - x0) * (i / pasos), y = y0 + (y1 - y0) * (i / pasos);
-      const R = 9 + fuerza * 7;
+      const R = 24 + fuerza * 21;
       const gr = ectx.createRadialGradient(x, y, 0, x, y, R);
       gr.addColorStop(0, `rgba(255,${gC},${bC},${0.6 * fuerza + 0.25})`);
       gr.addColorStop(1, `rgba(255,${gC},${bC},0)`);
@@ -211,10 +217,10 @@
   const mover = (cx, cy) => {
     const r = hero.getBoundingClientRect(), rc = canvas.getBoundingClientRect();
     m.tx = (cx - r.left) / r.width - 0.5; m.ty = (cy - r.top) / r.height - 0.5;
-    const ex = ((cx - rc.left) / rc.width) * 160, ey = ((cy - rc.top) / rc.height) * 90;
+    const ex = ((cx - rc.left) / rc.width) * 240, ey = ((cy - rc.top) / rc.height) * 135;
     const ahora = performance.now(), dt = Math.max((ahora - m.ultimo) / 1000, 0.008);
     if (m.ex >= 0 && ahora - m.ultimo < 120) {
-      const vx = ((ex - m.ex) / 160) * rc.width / dt, vy = ((ey - m.ey) / 90) * rc.height / dt;
+      const vx = ((ex - m.ex) / 240) * rc.width / dt, vy = ((ey - m.ey) / 135) * rc.height / dt;
       pintarEstela(m.ex, m.ey, ex, ey, vx, vy);
     }
     m.ex = ex; m.ey = ey; m.ultimo = ahora;
@@ -247,10 +253,10 @@
     const g = Math.max(desde < GLITCH ? 1 - desde / GLITCH : 0, enRafaga ? 0.25 : 0);
     // La estela se desvanece hacia "sin intensidad y sin dirección"
     if (estelaViva > 0) {
-      ectx.fillStyle = 'rgba(0,128,128,0.06)';
-      ectx.fillRect(0, 0, 160, 90);
-      estelaViva *= 0.965;
-      if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 160, 90); }
+      ectx.fillStyle = 'rgba(0,128,128,0.022)';   // se relaja en unos 3 segundos
+      ectx.fillRect(0, 0, 240, 135);
+      estelaViva *= 0.988;
+      if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 240, 135); }
       if (gl) { gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, estelaTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, estela); }
       sucio = true;
     }
