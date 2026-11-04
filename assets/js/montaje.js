@@ -1,11 +1,12 @@
 // Fondo de la portada: montaje de proyectos del portafolio, dibujado con WebGL en la tarjeta gráfica.
-// - Ritmo: ráfagas de cortes rápidos y, entre ráfaga y ráfaga, una imagen que se sostiene con un empuje
-//   lento de cámara (el empuje y el paralaje los hace CSS, sin redibujar).
+// - Ritmo de latido en frases: fuerte-lento · fuerte-fuerte-lento · fuerte-lento-lento, con un empuje de cámara que no
+//   para y un pulso en cada latido (el empuje y el paralaje los hace CSS, sin redibujar).
 // - Gradación fría con rojos intensos: base gris azulada; los tonos cálidos (pieles, ropa, luces) se vuelven
 //   rojo casi magenta y se estiran hacia un lado; desfase RGB leve, grano de película animado y bloom.
-// - Cortes con glitch VHS: líneas de barrido, temblor vertical, banda de tracking, sangrado de color y ruido.
-// - Hover: el cursor estira la imagen en la dirección del movimiento (azul del lado de la foto, rojo
-//   hacia donde se estira) y la imagen vuelve sola a su lugar en unos segundos.
+// - Cortes con glitch prismático: columnas de vidrio que refractan la foto, dispersión roja y azul,
+//   filos de luz, haces y rayos verticales; la foto nueva se abre desde el centro.
+// - Hover: el cursor estira la imagen en la dirección del movimiento y revela su negativo; la imagen
+//   vuelve sola a su lugar en unos segundos.
 // Sin WebGL, las fotos se muestran con un oscurecido simple.
 (() => {
   const hero = document.querySelector('.hero');
@@ -15,9 +16,15 @@
 
   const NOMBRES = ['puntos-azules', 'gatozorro-portada', 'andina-refajo', 'naiza-120', 'dapper-portada', 'avianca-cargo',
     'la-liga-epm', 'andina-feria-cali', 'gatozorro-01', 'puntos-colombia', 'dapper'];
-  const RAFAGA = { cortes: 7, ms: 95 };   // cortes rápidos por ráfaga y duración de cada uno
-  const SOSTEN = 2200;                   // ms que se sostiene la imagen entre ráfagas
-  const GLITCH = 260;                    // ms de VHS después de cada corte
+  // Ritmo de latido en frases que se repiten: F = latido fuerte (rápido y brillante), L = latido lento
+  // (más suave y más largo). Entre latidos de una frase hay poco tiempo; entre frases, una pausa corta.
+  const FRASES = [['F', 'L'], ['F', 'F', 'L'], ['F', 'L', 'L']];
+  const LATIDO = {
+    F: { fuerza: 1, dura: 1, luego: 2000 },      // fuerte: glitch completo; la foto queda 2 s
+    L: { fuerza: 0.55, dura: 1.5, luego: 2300 }, // lento: más tenue, se apaga más despacio; la foto queda 2,3 s
+    pausa: 2700,                                  // la última foto de cada frase se queda un poco más
+  };
+  const GLITCH = 630;                    // ms que dura el glitch prismático después de cada corte
 
   const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
   const ctx2d = gl ? null : canvas.getContext('2d');
@@ -27,36 +34,64 @@
   const FRAG = `
     precision mediump float;
     varying vec2 v;
-    uniform sampler2D uTex, uBloom, uEstela;   // uEstela: r = intensidad, g/b = dirección del movimiento
-    uniform vec2 uRes, uCubre;          // resolución del lienzo y escala para cubrir con la imagen
-    uniform float uGlitch, uT, uFade;
+    uniform sampler2D uTex, uBloom, uEstela, uPrev;   // uPrev: la foto anterior, para fundir el corte   // uEstela: r = intensidad, g/b = dirección del movimiento
+    uniform vec2 uRes, uCubre, uCubreP;          // resolución del lienzo y escala para cubrir con la imagen
+    uniform float uGlitch, uT, uFade, uMezcla, uSemilla, uProg;
     float h(float n){ return fract(sin(n) * 43758.5453); }
     float h2(vec2 q){ return fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453); }
     vec2 cubrir(vec2 q){ return (q - .5) * uCubre + .5; }
     // Cuánto "cálido" tiene un color (rojos, naranjas, pieles): de ahí sale el rojo intenso
     float calor(vec3 c){ return smoothstep(.07, .3, c.r - max(c.g * .85, c.b)); }
     // Base fría: casi sin saturación, con sombras azul petróleo y luces gris azulado
-    vec3 frioDe(vec3 c){ float l = dot(c, vec3(.299, .587, .114)); return mix(vec3(l), c, .3) * vec3(.8, .9, 1.1) + vec3(.02, .035, .07) * (1. - l); }
+    vec3 frioDe(vec3 c){ float l = dot(c, vec3(.299, .587, .114)); return mix(vec3(l), c, .42) * vec3(.72, .9, 1.22) + vec3(.015, .04, .1) * (1. - l); }
     // Cálidos: rojo casi magenta, suavizado (menos saturado y menos brillante)
-    vec3 rojoDe(vec3 c){ float l = dot(c, vec3(.299, .587, .114)); return vec3(.82, .22, .34) * (.24 + l * 1.05) + vec3(.16, .08, .1) * smoothstep(.6, 1., l); }
+    vec3 rojoDe(vec3 c){ float l = dot(c, vec3(.299, .587, .114)); return vec3(.92, .16, .32) * (.24 + l * 1.15) + vec3(.18, .07, .1) * smoothstep(.6, 1., l); }
+    // Ondas que fluyen: la estela se mueve como un líquido y no como un corte
+    vec2 ola(vec2 p, float t){ return vec2(sin(p.y * 22. + t * 3.1 + sin(p.x * 13. - t * 1.7) * 1.6), sin(p.x * 19. - t * 2.6 + sin(p.y * 15. + t * 2.2) * 1.6)); }
     vec3 acabado(vec3 c){ return clamp((c - .5) * 1.14 + .5, 0., 1.) * .88; }   // contraste
-    vec3 gradar(vec3 c){ return acabado(mix(frioDe(c), rojoDe(c), calor(c) * .75)); }
+    // Intensidad del filtro de color (frío con rojos): 0 = foto original, 1 = filtro completo
+    const float FILTRO = .1;
+    vec3 gradar(vec3 c){ return mix(c, acabado(mix(frioDe(c), rojoDe(c), calor(c) * .85)), FILTRO); }
     void main(){
       vec2 uv = vec2(v.x, 1. - v.y);
       float g = uGlitch;
-      // VHS: temblor vertical, jitter por línea y banda de tracking
-      uv.y += (h(floor(uT * 30.)) - .5) * .018 * g;
-      float linea = floor(uv.y * 220.);
-      uv.x += (h(linea + floor(uT * 60.)) - .5) * .012 * g;
-      float banda = fract(uT * .9);
-      float enBanda = smoothstep(.06, 0., abs(uv.y - banda)) * g;
-      uv.x += enBanda * .035 * sin(uv.y * 400. + uT * 40.);
-      float sangra = .0015 + .004 * g;                            // desfase RGB leve siempre, más en los cortes
+      // Glitch prismático: en los cortes la foto se ve a través de columnas de vidrio. Cada columna
+      // refracta su franja (la corre y la amplía), abre el color en rojo y azul y tiene un filo de luz.
+      float semilla = uSemilla;                                // cada corte trae un vidrio distinto
+      // Columnas siempre verticales, en espejo desde el centro: en cada corte se abren del centro hacia afuera
+      float aspP = uRes.x / uRes.y;
+      vec2 eje = vec2(1., 0.);
+      vec2 ejeUV = eje / vec2(aspP, 1.);
+      float cols = 3.2 + h(semilla) * 3.;                      // columnas gruesas: de 3 a 6 por alto de pantalla
+      float lado = uv.x < .5 ? -1. : 1.;                       // mitad izquierda hacia la izquierda, derecha hacia la derecha
+      float cx = abs(uv.x - .5) * aspP * cols - uProg * 1.6;    // el patrón avanza hacia afuera mientras dura el corte
+      float id = floor(cx), fr = fract(cx), lente = fr - .5;
+      float pr = (lente * (.05 + .07 * h(id + semilla * 7.)) + (h(id * 2.3 + semilla) - .5) * .03) * g;
+      float dp = (.003 + abs(lente) * .03) * g;                // dispersión: más fuerte hacia los bordes de cada columna
+      uv += ejeUV * pr * lado;
+      vec2 sv = vec2(.003, 0.) + ejeUV * dp * lado;                   // desfase de canales leve siempre, más en el vidrio
+      // Transición: solo durante el corte, la foto llega apenas estirada en horizontal (un solo eje)
+      // y se recoge enseguida; casi imperceptible
+      uv.x = .5 + (uv.x - .5) / (1. + .04 * g);
       vec2 q = cubrir(uv);
       vec3 c;
-      c.r = texture2D(uTex, q + vec2(sangra, 0.)).r;
+      c.r = texture2D(uTex, q + sv).r;
       c.g = texture2D(uTex, q).g;
-      c.b = texture2D(uTex, q - vec2(sangra, 0.)).b;
+      c.b = texture2D(uTex, q - sv).b;
+      // Fundido: la foto anterior se disuelve en la nueva en unos cuadros, en vez de un salto seco
+      if (uMezcla < 1.) {
+        vec2 qp = (uv - .5) * uCubreP + .5;
+        vec3 cp = vec3(texture2D(uPrev, qp + sv).r, texture2D(uPrev, qp).g, texture2D(uPrev, qp - sv).b);
+        // La foto nueva se abre desde el centro hacia los lados
+        float frente = uMezcla * .72;
+        c = mix(cp, c, 1. - smoothstep(frente - .2, frente, abs(uv.x - .5)));
+      }
+      // Eco muy sutil: dos copias tenues de la foto, corridas hacia afuera, que se apagan con el glitch
+      if (g > .01) {
+        vec3 eco = texture2D(uTex, cubrir(uv - ejeUV * lado * .035 * g)).rgb * .6
+                 + texture2D(uTex, cubrir(uv - ejeUV * lado * .07 * g)).rgb * .4;
+        c = mix(c, max(c, eco), .22 * g);
+      }
       // Rojos con motion blur: la capa cálida se promedia en horizontal, como si se moviera; la base fría queda nítida
       vec3 rs = vec3(0.); float ws = 0.;
       for (int i = 0; i < 9; i++) {
@@ -64,7 +99,20 @@
         float w = calor(m);
         rs += rojoDe(m) * w; ws += w;
       }
-      c = acabado(mix(frioDe(c), rs / max(ws, .001), ws / 9. * .75));
+      c = mix(c, acabado(mix(frioDe(c), rs / max(ws, .001), ws / 9. * .85)), FILTRO);
+      // Extremos desenfocados en diagonal curva: nítido en una banda que cruza la imagen en diagonal
+      // y que se curva; hacia las esquinas opuestas la foto se desenfoca poco a poco
+      vec2 pd = vec2((uv.x - .5) * uRes.x / uRes.y, uv.y - .5);
+      float lejos = abs(pd.y + .42 * pd.x - .32 * pd.x * pd.x);
+      float desenfoque = smoothstep(.16, .5, lejos);
+      if (desenfoque > .01) {
+        vec3 db = vec3(0.);
+        for (int i = 0; i < 12; i++) {
+          float a = float(i) * 2.39996, r = sqrt((float(i) + .5) / 12.);   // espiral dorada: disco uniforme
+          db += texture2D(uTex, q + vec2(cos(a), sin(a)) * r * desenfoque * vec2(.03 * uRes.y / uRes.x, .03)).rgb;
+        }
+        c = mix(c, gradar(db / 12.), desenfoque);
+      }
       // Bloom: luces altas pre-desenfocadas, con la misma gradación
       c += gradar(texture2D(uBloom, q).rgb) * .55;
       // Rojos estirados: los cálidos se arrastran hacia un lado, como una foto movida con flash
@@ -73,45 +121,67 @@
         float f = float(i) / 7.;
         vec3 m = texture2D(uTex, cubrir(uv - vec2(.055, .008) * f)).rgb;
         float lm = dot(m, vec3(.299, .587, .114));
-        barrido = max(barrido, vec3(.82, .2, .32) * (.25 + lm) * calor(m) * (1. - f) * .5);
+        barrido = max(barrido, vec3(.92, .15, .3) * (.25 + lm) * calor(m) * (1. - f) * .6 * FILTRO);
       }
       c = 1. - (1. - c) * (1. - barrido);                          // se suma como luz (screen)
       // Estela del cursor: estira la foto en la dirección del movimiento (los píxeles se arrastran desde
       // atrás) y se relaja sola en unos segundos. Del lado de la foto se enfría a azul; hacia donde se
       // estira se calienta a naranja, con el rojo y el azul separados como en una exposición larga.
       // Estela suavizada (9 muestras) para que el estiramiento no quede dentado
-      vec2 ue = vec2(v.x, 1. - v.y), px = vec2(2.4 / 320., 2.4 / 180.);   // misma orientación que el lienzo de la estela
-      vec4 e = vec4(0.);
-      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) e += texture2D(uEstela, ue + vec2(float(i), float(j)) * px);
+      vec2 ue = vec2(v.x, 1. - v.y), px = vec2(3.4 / 320., 3.4 / 180.);   // misma orientación que el lienzo de la estela
+      // El borde de la estela tiembla como la superficie de un líquido
+      vec2 aspE = vec2(uRes.y / uRes.x, 1.);
+      vec2 ueL = ue + ola(ue / aspE * .7, uT * .8) * aspE * .0045;
+      vec4 e = vec4(0.); vec2 gr = vec2(0.);   // gr: pendiente de la estela, para la refracción y el brillo
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+        vec4 s = texture2D(uEstela, ueL + vec2(float(i), float(j)) * px);
+        e += s; gr += s.r * vec2(float(i), float(j));
+      }
       e /= 9.;
-      float k = smoothstep(0., .6, e.r); k = k * k * (3. - 2. * k);   // transición doble: bordes muy suaves
+      float k = smoothstep(.02, .7, e.r); k = k * k * (3. - 2. * k);   // transición doble: bordes muy suaves
       if (k > .001) {
         vec2 dir = (e.gb - .5) * 2.;
         dir = length(dir) > .02 ? normalize(dir) : vec2(1., 0.);
         // Desplazamiento: cada píxel toma la foto que quedó atrás; como la fuerza varía dentro de la estela,
         // la imagen se estira (no se emborrona). Unas pocas muestras cercanas dan el barrido suave
-        vec2 atras = -dir * vec2(uRes.y / uRes.x, 1.) * .12 * k * k;   // 40 % del largo anterior
-        vec3 suma = vec3(0.);
-        for (int i = 0; i < 6; i++) {
-          float f = .72 + float(i) / 5. * .28;
-          vec2 o = atras * f;
-          suma.r += texture2D(uTex, cubrir(uv + o * 1.06)).r;
-          suma.g += texture2D(uTex, cubrir(uv + o)).g;
-          suma.b += texture2D(uTex, cubrir(uv + o * .94)).b;
-        }
-        vec3 estirada = gradar(suma / 6.);
-        // Color de la referencia: azul frío donde apenas se estira, naranja cálido donde más se arrastra
-        float l = dot(estirada, vec3(.299, .587, .114));
-        vec3 frio = vec3(.12, .42, .95) * (.25 + l * 1.5);
-        vec3 calido = vec3(.85, .22, .34) * (.3 + l * 1.6);
-        vec3 tono = mix(frio, calido, smoothstep(.25, .9, k));
-        c = mix(c, mix(estirada, tono, .42 * smoothstep(.2, .8, k)), k);   // el tono solo donde más se estira: bordes limpios
+        vec2 asp = vec2(uRes.y / uRes.x, 1.);
+        vec2 atras = -dir * asp * .096 * k * k;   // 20 % más corto que antes
+        atras += ola(ue / asp, uT) * asp * .02 * k;   // ondulación líquida dentro de la estela
+        atras += gr * asp * .02;                        // los bordes refractan la foto, como una gota
+        // Una sola muestra por canal: la foto se deforma y se mezcla como agua, sin copias repetidas
+        vec2 disp = gr * asp * .006;   // dispersión: el color se abre donde el líquido se curva
+        vec2 o = atras * .86;
+        vec3 suma = vec3(texture2D(uTex, cubrir(uv + o * 1.02 + disp)).r,
+                         texture2D(uTex, cubrir(uv + o)).g,
+                         texture2D(uTex, cubrir(uv + o * .98 - disp)).b);
+        vec3 estirada = gradar(suma);
+        // Revela el negativo de la foto: más fuerte en el centro de la estela, se funde hacia los bordes
+        vec3 negativo = pow(1. - estirada, vec3(1.6)) * .6;   // negativo oscuro
+        c = mix(c, mix(estirada, negativo, smoothstep(.15, .75, k)), k);
+        // Brillo húmedo: una luz suave se refleja en la pendiente de la estela
+        vec3 nrm = normalize(vec3(-gr * 2.2, .35));
+        float brillo = pow(max(dot(nrm, normalize(vec3(-.45, .55, .7))), 0.), 18.);
+        float destello = pow(max(dot(nrm, normalize(vec3(.5, -.35, .8))), 0.), 60.);
+        c += vec3(.85, .9, 1.) * (brillo * .32 + destello * .22) * smoothstep(.05, .4, k);
+        // Menisco: filo cian muy tenue donde el líquido toca la foto
+        c += vec3(0., .55, .65) * smoothstep(.04, .25, k) * (1. - smoothstep(.25, .6, k)) * .14;
       }
-      // VHS: líneas de barrido (siempre, muy suaves), ruido y desteñido en la banda
-      c *= .965 + .035 * sin(v.y * uRes.y * 1.6);
-      // Grano de película: grueso (2 px) y animado; más fuerte en los cortes
-      c += (h2(floor(v * uRes / 1.6) + fract(uT * 7.3) * 91.) - .5) * (.085 + .14 * g);
-      c = mix(c, vec3(dot(c, vec3(.33))) * 1.15, enBanda * .6);
+      // Filos de luz de las columnas de vidrio (rojo a un lado, azul al otro) y rayos verticales de las luces
+      if (g > .01) {
+        c += (vec3(smoothstep(.08, 0., fr) * .6, 0., smoothstep(.92, 1., fr) * .75) + vec3(.9, .92, 1.) * smoothstep(.025, 0., abs(fr - .04)) * .5) * g;
+        vec3 rayo = vec3(0.);
+        for (int i = 0; i < 5; i++) rayo += texture2D(uBloom, q + vec2(-eje.y / aspP, eje.x) * (float(i) - 2.) * .07 * g).rgb;   // a lo largo de la columna
+        c += gradar(rayo / 5.) * .7 * g;
+        // Haces de luz: algunas columnas se encienden con un haz rosado y blanco, con halo amplio,
+        // y toda la imagen se ilumina con una bruma violeta
+        float enc = step(.62, h(id * 5.1 + semilla * 3.7));
+        float haz = exp(-pow((fr - .5) / .1, 2.)), halo = exp(-pow((fr - .5) / .38, 2.));
+        vec3 tinte = mix(vec3(1., .42, .78), vec3(.55, .62, 1.), h(id + semilla));
+        c += (mix(tinte, vec3(1.), haz * .6) * haz * 1.05 + tinte * halo * .25) * enc * g;
+        c = c * (1. + .22 * g) + vec3(.32, .2, .42) * .15 * g;
+      }
+      // Grano de película: grueso (2 px) y animado, a la mitad de lo que tenía; más fuerte en los cortes
+      c += (h2(floor(v * uRes / 1.6) + fract(uT * 7.3) * 91.) - .5) * (.042 + .07 * g);
       gl_FragColor = vec4(c * uFade, 1.);
     }`;
 
@@ -130,10 +200,11 @@
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    ['uTex', 'uBloom', 'uEstela', 'uRes', 'uCubre', 'uGlitch', 'uT', 'uFade'].forEach((n) => { uni[n] = gl.getUniformLocation(prog, n); });
+    ['uTex', 'uBloom', 'uEstela', 'uRes', 'uCubre', 'uGlitch', 'uT', 'uFade', 'uPrev', 'uCubreP', 'uMezcla', 'uSemilla', 'uProg'].forEach((n) => { uni[n] = gl.getUniformLocation(prog, n); });
     gl.uniform1i(uni.uTex, 0);
     gl.uniform1i(uni.uBloom, 1);
     gl.uniform1i(uni.uEstela, 2);
+    gl.uniform1i(uni.uPrev, 3);
   }
   const textura = (fuente) => {
     const t = gl.createTexture();
@@ -170,7 +241,9 @@
 
   let W = 0, H = 0;
   let ultimoGrano = 0;
-  let actual = 0, corteEn = -1e9, cortesRestantes = 0, proximoCorte = 0, sostenDesde = 0, encendido = quieto ? 1 : 0, t0 = 0, sucio = true;
+  let previo = 0, cortes = 0, gSuave = 0, ultimoCuadro = 0;
+  let frase = 0, paso = 0, fuerzaCorte = 1, duraCorte = 1, duraImagen = 2000;
+  let actual = 0, corteEn = -1e9, proximoCorte = 0, sostenDesde = 0, encendido = quieto ? 1 : 0, t0 = 0, sucio = true;
 
   // El lienzo trabaja a la resolución de las fotos (máx. 1280 px de ancho); la tarjeta gráfica lo estira
   const medir = () => {
@@ -221,11 +294,11 @@
     const fuerza = Math.min(1, v / 900);
     for (let i = 1; i <= pasos; i++) {
       const x = x0 + (x1 - x0) * (i / pasos), y = y0 + (y1 - y0) * (i / pasos);
-      const R = 13 + fuerza * 11;   // 40 % del tamaño anterior
+      const R = 10.4 + fuerza * 8.8;   // 20 % más pequeño que antes
       const gr = ectx.createRadialGradient(x, y, 0, x, y, R);
       const a = 0.6 * fuerza + 0.25;
       // Caída gaussiana: sin borde marcado donde termina el efecto
-      [[0, 1], [0.25, 0.85], [0.5, 0.5], [0.75, 0.16], [1, 0]].forEach(([t, k]) => gr.addColorStop(t, `rgba(255,${gC},${bC},${(a * k).toFixed(3)})`));
+      [[0, 1], [0.2, 0.82], [0.45, 0.45], [0.7, 0.15], [0.88, 0.04], [1, 0]].forEach(([t, k]) => gr.addColorStop(t, `rgba(255,${gC},${bC},${(a * k).toFixed(3)})`));
       ectx.fillStyle = gr;
       ectx.fillRect(x - R, y - R, R * 2, R * 2);
     }
@@ -249,36 +322,48 @@
   hero.addEventListener('pointerleave', () => { m.ex = -1; });
   hero.addEventListener('pointermove', (e) => mover(e.clientX, e.clientY), { passive: true });
   hero.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) mover(t.clientX, t.clientY); }, { passive: true });
-  hero.addEventListener('pointerdown', (e) => { if (!e.target.closest('a, button')) { iniciarRafaga(3); despertar(); } });
+  hero.addEventListener('pointerdown', (e) => { if (!e.target.closest('a, button')) { latirYa(); despertar(); } });
   // La N se enciende (ver intro.js): ráfaga
-  hero.addEventListener('noxpy:chispa', () => { iniciarRafaga(RAFAGA.cortes); despertar(); });
+  hero.addEventListener('noxpy:chispa', () => { latirYa(); despertar(); });
 
-  const iniciarRafaga = (n) => { cortesRestantes = n; proximoCorte = 0; };
+  const latirYa = () => { frase = 0; paso = 0; proximoCorte = 0; };
   const cortar = (ahora) => {
     if (listas.length < 2) return;
     let siguiente; do { siguiente = Math.floor(Math.random() * listas.length); } while (siguiente === actual);
-    actual = siguiente; corteEn = ahora; sucio = true;
+    previo = actual; actual = siguiente; corteEn = ahora; cortes++; sucio = true;
   };
 
   const dibujar = (ahora) => {
     if (!listas.length) return;
     const item = listas[actual % listas.length];
-    const enRafaga = cortesRestantes > 0;
-    // Empuje de cámara y paralaje: los mueve la tarjeta gráfica (transform), sin redibujar
-    const empuje = enRafaga ? 1.02 : 1 + Math.min((ahora - sostenDesde) / SOSTEN, 1) * 0.05;
+    // Empuje de cámara y paralaje: los mueve la tarjeta gráfica (transform), sin redibujar.
+    // La cámara nunca se queda quieta: avanza lento durante todo el ciclo y cada latido la empuja un poco más
+    // Cada foto hace su propio acercamiento lento durante todo el tiempo que está en pantalla
+    const avance = Math.min((ahora - corteEn) / duraImagen, 1);
+    const pulso = Math.exp(-(ahora - corteEn) / 220) * fuerzaCorte;
+    const empuje = 1.02 + avance * 0.07 + pulso * 0.03;
     m.x += (m.tx - m.x) * 0.08; m.y += (m.ty - m.y) * 0.08;
     canvas.style.transform = `translate3d(${(-m.x * 26).toFixed(1)}px, ${(-m.y * 18).toFixed(1)}px, 0) scale(${empuje.toFixed(4)})`;
 
     const desde = ahora - corteEn;
-    const g = Math.max(desde < GLITCH ? 1 - desde / GLITCH : 0, enRafaga ? 0.25 : 0);
+    // El brillo del corte se apaga con una curva suave (rápido al principio, lento al final)
+    // El glitch entra y sale suave: se sostiene un instante tras el corte, baja despacio, y además
+    // se filtra cuadro a cuadro para que nunca salte de golpe (ni al subir ni al bajar)
+    const largo = GLITCH * duraCorte;
+    const objetivo = (desde < 112 ? 1 : desde < largo ? (1 - (desde - 112) / (largo - 112)) ** 2 : 0) * fuerzaCorte;
+    const dt = Math.min(ahora - (ultimoCuadro || ahora), 100); ultimoCuadro = ahora;
+    gSuave += (objetivo - gSuave) * (1 - Math.exp(-dt / 140));
+    const g = gSuave < 0.003 ? 0 : gSuave;
+    // Fundido entre la foto anterior y la nueva (unos 420 ms)
+    const tm = Math.min(desde / (420 * duraCorte), 1), mezcla = tm * tm * (3 - 2 * tm);
     // La estela se desvanece hacia "sin intensidad y sin dirección"
     if (estelaViva > 0) {
-      ectx.fillStyle = 'rgba(0,128,128,0.022)';   // se relaja en unos 3 segundos
+      ectx.fillStyle = 'rgba(0,128,128,0.017)';   // se relaja despacio, como un líquido espeso
       ectx.fillRect(0, 0, 320, 180);
-      estelaViva *= 0.988;
+      estelaViva *= 0.991;
       if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 320, 180); }
       if (gl) { gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, estelaTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, estela); }
-      if (marca) { if (estelaViva > 0) marca.dibujar(canvas); else marca.soltar(); }
+      if (marca) { if (estelaViva > 0) marca.dibujar(canvas, (ahora - t0) / 1000); else marca.soltar(); }
       sucio = true;
     }
     // Solo se redibuja con un corte, durante el VHS, mientras vive la estela o mientras se enciende
@@ -297,6 +382,12 @@
       gl.uniform1f(uni.uGlitch, g);
       gl.uniform1f(uni.uT, (ahora - t0) / 1000);
       gl.uniform1f(uni.uFade, encendido);
+      const pv = listas[previo % listas.length] || item, sp = Math.max(W / pv.w, H / pv.h);
+      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, pv.tex);
+      gl.uniform2f(uni.uCubreP, W / (pv.w * sp), H / (pv.h * sp));
+      gl.uniform1f(uni.uMezcla, mezcla);
+      gl.uniform1f(uni.uProg, Math.min(desde / (GLITCH * duraCorte), 1));
+      gl.uniform1f(uni.uSemilla, cortes % 97);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     } else {
       const w = item.w * s, hh = item.h * s;
@@ -323,26 +414,25 @@
       varying vec2 v;
       uniform sampler2D uLogo, uEstela;
       uniform vec4 uIn, uMap;     // uIn: rectángulo del logo dentro del lienzo; uMap: lienzo → coordenadas de la estela
-      uniform vec2 uConv, uAsp;   // de desplazamiento del montaje a desplazamiento del lienzo; proporción del montaje
+      uniform vec2 uConv, uAsp;
+      uniform float uT;   // de desplazamiento del montaje a desplazamiento del lienzo; proporción del montaje
+      // Ondas que fluyen: la estela se mueve como un líquido y no como un corte
+      vec2 ola(vec2 p, float t){ return vec2(sin(p.y * 22. + t * 3.1 + sin(p.x * 13. - t * 1.7) * 1.6), sin(p.x * 19. - t * 2.6 + sin(p.y * 15. + t * 2.2) * 1.6)); }
       vec4 logo(vec2 q){ vec2 t = (q - uIn.xy) / uIn.zw; return (t.x < 0. || t.y < 0. || t.x > 1. || t.y > 1.) ? vec4(0.) : texture2D(uLogo, t); }
       void main(){
         vec2 u = vec2(v.x, 1. - v.y);
-        vec2 ue = uMap.xy + u * uMap.zw, px = vec2(2.4 / 320., 2.4 / 180.);
+        vec2 ue = uMap.xy + u * uMap.zw, px = vec2(3.4 / 320., 3.4 / 180.);
         vec4 e = vec4(0.);
         for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) e += texture2D(uEstela, ue + vec2(float(i), float(j)) * px);
         e /= 9.;
-        float k = smoothstep(0., .6, e.r); k = k * k * (3. - 2. * k);
+        float k = smoothstep(.02, .7, e.r); k = k * k * (3. - 2. * k);
         vec2 dir = (e.gb - .5) * 2.;
         dir = length(dir) > .02 ? normalize(dir) : vec2(1., 0.);
-        vec2 atras = -dir * uAsp * .12 * k * k * uConv;
-        vec4 suma = vec4(0.);
-        for (int i = 0; i < 6; i++) {
-          float f = .72 + float(i) / 5. * .28;
-          vec2 o = atras * f;
-          vec4 a = logo(u + o * 1.03), b = logo(u + o), c = logo(u + o * .97);
-          suma += vec4(a.r, b.g, c.b, max(a.a, max(b.a, c.a)));
-        }
-        gl_FragColor = suma / 6.;
+        vec2 atras = (-dir * uAsp * .096 * k * k + ola(ue / uAsp, uT) * uAsp * .016 * k) * uConv;
+        // Una sola muestra: el logo se deforma como agua, sin copias repetidas (efecto acordeón)
+        vec2 o = atras * .86;
+        vec4 a = logo(u + o * 1.015), b = logo(u + o), c = logo(u + o * .985);
+        gl_FragColor = vec4(a.r, b.g, c.b, max(a.a, max(b.a, c.a)));
       }`;
     const sh = (tipo, src) => { const x = lg.createShader(tipo); lg.shaderSource(x, src); lg.compileShader(x); return x; };
     const pr = lg.createProgram();
@@ -355,7 +445,7 @@
     const lc = lg.getAttribLocation(pr, 'p');
     lg.enableVertexAttribArray(lc); lg.vertexAttribPointer(lc, 2, lg.FLOAT, false, 0, 0);
     const u = {};
-    ['uLogo', 'uEstela', 'uIn', 'uMap', 'uConv', 'uAsp'].forEach((n) => { u[n] = lg.getUniformLocation(pr, n); });
+    ['uLogo', 'uEstela', 'uIn', 'uMap', 'uConv', 'uAsp', 'uT'].forEach((n) => { u[n] = lg.getUniformLocation(pr, n); });
     lg.uniform1i(u.uLogo, 0); lg.uniform1i(u.uEstela, 1);
     lg.pixelStorei(lg.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     const nueva = () => {
@@ -384,7 +474,7 @@
       return true;
     };
     return {
-      dibujar(montaje) {
+      dibujar(montaje, t) {
         if (!rasterizar()) return;
         const r = marcaImg.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
         // Margen alrededor del logo para que el estiramiento no se corte
@@ -399,6 +489,7 @@
         lg.uniform4f(u.uMap, (cr.x - m.left) / m.width, (cr.y - m.top) / m.height, w / m.width, h / m.height);
         lg.uniform2f(u.uConv, m.width / w, m.height / h);
         lg.uniform2f(u.uAsp, m.height / m.width, 1);
+        lg.uniform1f(u.uT, t);
         lg.activeTexture(lg.TEXTURE0); lg.bindTexture(lg.TEXTURE_2D, tLogo);
         lg.activeTexture(lg.TEXTURE1); lg.bindTexture(lg.TEXTURE_2D, tEstela);
         lg.pixelStorei(lg.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -417,18 +508,18 @@
   const cuadro = (ahora) => {
     raf = 0;
     if (!visible || document.hidden) return;
-    if (!t0) { t0 = ahora; sostenDesde = ahora; iniciarRafaga(RAFAGA.cortes); }
+    if (!t0) { t0 = ahora; sostenDesde = ahora; latirYa(); }
     encendido = Math.min(1, (ahora - t0) / 900);
-    // Ritmo: ráfaga de cortes rápidos → imagen sostenida → nueva ráfaga
-    if (cortesRestantes > 0) {
-      if (ahora >= proximoCorte) {
-        cortar(ahora);
-        cortesRestantes--;
-        proximoCorte = ahora + RAFAGA.ms * (0.7 + Math.random() * 0.6);
-        if (cortesRestantes === 0) sostenDesde = ahora;
-      }
-    } else if (ahora - sostenDesde > SOSTEN) {
-      iniciarRafaga(RAFAGA.cortes);
+    // Ritmo: F-L · F-F-L · F-L-L · y vuelve a empezar
+    if (ahora >= proximoCorte) {
+      cortar(ahora);
+      const tipo = FRASES[frase][paso], l = LATIDO[tipo];
+      fuerzaCorte = l.fuerza; duraCorte = l.dura;
+      if (paso === 0) sostenDesde = ahora;
+      const finFrase = paso === FRASES[frase].length - 1;
+      duraImagen = (finFrase ? LATIDO.pausa : l.luego) * (1 + Math.random() * 0.1);   // nunca menos de 2 s
+      proximoCorte = ahora + duraImagen;
+      if (finFrase) { paso = 0; frase = (frase + 1) % FRASES.length; } else paso++;
     }
     dibujar(ahora);
     raf = requestAnimationFrame(cuadro);

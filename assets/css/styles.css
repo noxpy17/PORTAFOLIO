@@ -206,7 +206,7 @@ body::before {
    desfase RGB (#df00f7 / cian), halation cálida y bloom amplio */
 .hero-marca {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  display: grid; place-items: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(12px, 1.6vw, 22px);
   padding-bottom: 16vh;   /* un poco por encima del centro, lejos del titular */
 }
 .hero-marca-luz { position: relative; }
@@ -224,7 +224,7 @@ body::before {
 }
 .hero-marca img { display: block; width: clamp(130px, 21.6vw, 346px); height: auto; }
 @media (max-width: 760px) {
-  .hero-marca { place-items: start center; padding: 24vh 0 0; }
+  .hero-marca { justify-content: flex-start; padding: 24vh 0 0; }
   .hero-marca img { width: 40.5vw; }
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -306,11 +306,15 @@ body::before {
 }
 .hero h1 {
   margin: 0;
-  font-size: clamp(2rem, 4.1vw, 4.05rem); line-height: .95;   /* 40% más pequeño */
+  /* Diagramación centrada bajo PORTAFOLIO: dos líneas del mismo ancho que el logo, justificadas
+     (el espacio sobrante se reparte entre las palabras) */
+  /* Texto protagonista: el ancho lo da «Creativo por naturaleza.» y «Rebelde en el diseño.» se justifica a ese ancho */
+  width: fit-content; max-width: 94vw;
+  font-size: min(clamp(36px, 3.36vw, 54px), 5.4vw); line-height: 1.1;
   letter-spacing: .04em;
-  max-width: 13ch;
+  text-align: justify; text-align-last: justify; text-wrap: nowrap;
 }
-.hero h1 .linea { display: block; }
+.hero h1 .linea { display: block; white-space: nowrap; text-align-last: justify; }
 .hero h1 .linea:not(.linea--luz) { font-weight: 200; letter-spacing: .07em; }
 .hero h1 .linea--luz { color: var(--cian); }
 
@@ -375,10 +379,10 @@ body::before {
 .tch.cursor::after { position: absolute; left: calc(100% + .06em); top: .05em; }
 .caret { margin-left: .08em; }
 @keyframes parpadeo { 50% { opacity: 0; } }
-.hero-eyebrow { margin: 0; color: var(--texto); }
+.hero-eyebrow { margin: 0; color: var(--texto); text-align: center; }
 /* Símbolo en la portada: la N dentro de la llama, con degradado en movimiento.
    Glow óptico, bloom (halo amplio) y halation (filo cálido) */
-.hero-llama { position: relative; width: clamp(64px, 7vw, 104px); margin-bottom: 4px; }
+.hero-llama { position: relative; width: clamp(64px, 7vw, 104px); margin-top: clamp(14px, 3vh, 36px); }   /* centrada, debajo del manifiesto */
 .hero-llama svg { position: relative; z-index: 1; display: block; width: 100%; height: auto; overflow: visible; }
 /* Halo (bloom y halation): pre-calculado como imagen detrás de la llama. La llama cambia en cada cuadro;
    si el brillo se calculara encima de ella, el navegador lo redibujaría sin parar. Aquí solo cambia su opacidad */
@@ -420,7 +424,7 @@ body::before {
 
 
 /* Manifiesto corto: se escribe y se borra, una línea a la vez */
-.manifiesto { margin: 0; font: 600 clamp(1.25rem, 2.4vw, 1.75rem)/1.2 var(--f-titulo); min-height: 1.2em; }
+.manifiesto { margin: 0; font: 600 clamp(1rem, 1.5vw, 1.4rem)/1.2 var(--f-titulo); min-height: 1.2em; text-align: center; }
 .m-tipeo { white-space: nowrap; }
 .caret { display: none; }
 .is-tipeando .caret { display: inline-block; }
