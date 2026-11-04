@@ -3,7 +3,8 @@
 //   lento de cámara (el empuje y el paralaje los hace CSS, sin redibujar).
 // - Gradación teal & orange: sombras verde azulado, luces y pieles naranja, con bloom en las luces altas.
 // - Cortes con glitch VHS: líneas de barrido, temblor vertical, banda de tracking, sangrado de color y ruido.
-// - Hover: el cursor deforma la imagen como agua, con separación RGB en el borde de la onda.
+// - Hover: el cursor deja una estela que arrastra la imagen en la dirección del movimiento y la tiñe
+//   con un mapa de color cian → amarillo → magenta, como una exposición larga; la estela se desvanece sola.
 // Sin WebGL, las fotos se muestran con un oscurecido simple.
 (() => {
   const hero = document.querySelector('.hero');
@@ -25,10 +26,9 @@
   const FRAG = `
     precision mediump float;
     varying vec2 v;
-    uniform sampler2D uTex, uBloom;
+    uniform sampler2D uTex, uBloom, uEstela;   // uEstela: r = intensidad, g/b = dirección del movimiento
     uniform vec2 uRes, uCubre;          // resolución del lienzo y escala para cubrir con la imagen
-    uniform vec2 uMouse;                 // cursor en coordenadas 0..1
-    uniform float uLiquido, uGlitch, uT, uFade;
+    uniform float uGlitch, uT, uFade;
     float h(float n){ return fract(sin(n) * 43758.5453); }
     float h2(vec2 q){ return fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453); }
     vec2 cubrir(vec2 q){ return (q - .5) * uCubre + .5; }
@@ -50,24 +50,40 @@
       float banda = fract(uT * .9);
       float enBanda = smoothstep(.06, 0., abs(uv.y - banda)) * g;
       uv.x += enBanda * .035 * sin(uv.y * 400. + uT * 40.);
-      // Líquido: ondas concéntricas alrededor del cursor
-      vec2 asp = vec2(uRes.x / uRes.y, 1.);
-      vec2 d = (uv - uMouse) * asp;
-      float r = length(d);
-      float onda = sin(r * 38. - uT * 7.) * exp(-r * 5.5) * uLiquido;
-      vec2 dir = r > .0001 ? d / r : vec2(0.);
-      vec2 off = dir / asp * onda * .022;
-      float borde = abs(onda) * 1.6;                               // separación RGB donde la onda es más fuerte
-      float sangra = .004 * g + .006 * borde;
-      vec2 q = cubrir(uv + off);
+      float sangra = .004 * g;
+      vec2 q = cubrir(uv);
       vec3 c;
       c.r = texture2D(uTex, q + vec2(sangra, 0.)).r;
       c.g = texture2D(uTex, q).g;
       c.b = texture2D(uTex, q - vec2(sangra, 0.)).b;
       c = gradar(c);
       // Bloom: luces altas pre-desenfocadas, con la misma gradación
-      vec3 b = gradar(texture2D(uBloom, cubrir(uv + off * .5)).rgb);
-      c += b * .55;
+      c += gradar(texture2D(uBloom, q).rgb) * .55;
+      // Estela del cursor: arrastre direccional (exposición larga) con mapa de color cian → amarillo → magenta
+      vec4 e = texture2D(uEstela, vec2(v.x, 1. - v.y));   // misma orientación que el lienzo de la estela
+      float k = smoothstep(.02, .38, e.r);
+      if (k > .001) {
+        vec2 dir = (e.gb - .5) * 2.;
+        dir = length(dir) > .02 ? normalize(dir) : vec2(1., 0.);
+        vec2 paso = -dir * vec2(uRes.y / uRes.x, 1.) * .028 * k;   // hacia atrás del movimiento
+        // Cada muestra de la estela toma color según su luz y lo lejos que quedó: cerca del sujeto magenta,
+        // luego amarillo y, en la cola, cian que se aclara hasta casi blanco
+        vec3 suma = vec3(0.), nitida = vec3(0.);
+        for (int i = 0; i < 10; i++) {
+          float f = float(i) / 9.;
+          vec3 m = texture2D(uTex, cubrir(uv + paso * f * 6.)).rgb;
+          float t = clamp(dot(m, vec3(.299, .587, .114)) * .7 + f * .5, 0., 1.);
+          vec3 mapa = t < .25 ? mix(vec3(.24, .14, .2), vec3(.93, .12, .72), t / .25)
+                    : t < .5 ? mix(vec3(.93, .12, .72), vec3(1., .8, .2), (t - .25) / .25)
+                    : t < .78 ? mix(vec3(1., .8, .2), vec3(.3, .85, .97), (t - .5) / .28)
+                    : mix(vec3(.3, .85, .97), vec3(.94, .97, .97), (t - .78) / .22);
+          if (i == 0) nitida = mapa;
+          suma += mapa;
+        }
+        // La foto conserva su detalle (mapa de color nítido) y la estela se suma como arrastre
+        vec3 trazo = max(nitida * .9, suma / 10.);
+        c = mix(c, trazo, k);
+      }
       // VHS: líneas de barrido (siempre, muy suaves), ruido y desteñido en la banda
       c *= .965 + .035 * sin(v.y * uRes.y * 1.6);
       c += (h2(v * uRes + uT) - .5) * (.03 + .16 * g);
@@ -90,9 +106,10 @@
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    ['uTex', 'uBloom', 'uRes', 'uCubre', 'uMouse', 'uLiquido', 'uGlitch', 'uT', 'uFade'].forEach((n) => { uni[n] = gl.getUniformLocation(prog, n); });
+    ['uTex', 'uBloom', 'uEstela', 'uRes', 'uCubre', 'uGlitch', 'uT', 'uFade'].forEach((n) => { uni[n] = gl.getUniformLocation(prog, n); });
     gl.uniform1i(uni.uTex, 0);
     gl.uniform1i(uni.uBloom, 1);
+    gl.uniform1i(uni.uEstela, 2);
   }
   const textura = (fuente) => {
     const t = gl.createTexture();
@@ -156,18 +173,54 @@
     img.src = `${base}${n}.webp`;
   });
 
-  // Mouse / dedo: paralaje (CSS) y onda líquida (sombreador)
-  const m = { x: 0, y: 0, tx: 0, ty: 0, ux: 0.5, uy: 0.5, liq: 0, px: 0, py: 0, ultimo: 0 };
+  // Estela del cursor: un lienzo pequeño (se estira en la tarjeta gráfica) donde el cursor pinta manchas suaves.
+  // Rojo = intensidad; verde/azul = dirección del movimiento. Cada cuadro se desvanece un poco.
+  const estela = document.createElement('canvas');
+  estela.width = 160; estela.height = 90;
+  const ectx = estela.getContext('2d');
+  ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 160, 90);
+  let estelaTex = null, estelaViva = 0;
+  if (gl) {
+    estelaTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, estelaTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, estela);
+  }
+  const pintarEstela = (x0, y0, x1, y1, vx, vy) => {
+    const pasos = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3));
+    const v = Math.hypot(vx, vy) || 1;
+    const gC = Math.round(128 + (vx / v) * 127), bC = Math.round(128 + (vy / v) * 127);
+    const fuerza = Math.min(1, v / 900);
+    for (let i = 1; i <= pasos; i++) {
+      const x = x0 + (x1 - x0) * (i / pasos), y = y0 + (y1 - y0) * (i / pasos);
+      const R = 9 + fuerza * 7;
+      const gr = ectx.createRadialGradient(x, y, 0, x, y, R);
+      gr.addColorStop(0, `rgba(255,${gC},${bC},${0.6 * fuerza + 0.25})`);
+      gr.addColorStop(1, `rgba(255,${gC},${bC},0)`);
+      ectx.fillStyle = gr;
+      ectx.fillRect(x - R, y - R, R * 2, R * 2);
+    }
+    estelaViva = 1;
+  };
+
+  // Mouse / dedo: paralaje (CSS) y estela (sombreador)
+  const m = { x: 0, y: 0, tx: 0, ty: 0, ex: -1, ey: -1, ultimo: 0 };
   const mover = (cx, cy) => {
     const r = hero.getBoundingClientRect(), rc = canvas.getBoundingClientRect();
     m.tx = (cx - r.left) / r.width - 0.5; m.ty = (cy - r.top) / r.height - 0.5;
-    m.ux = (cx - rc.left) / rc.width; m.uy = (cy - rc.top) / rc.height;
+    const ex = ((cx - rc.left) / rc.width) * 160, ey = ((cy - rc.top) / rc.height) * 90;
     const ahora = performance.now(), dt = Math.max((ahora - m.ultimo) / 1000, 0.008);
-    // La onda crece con la velocidad del cursor y se calma sola
-    m.liq = Math.min(1, m.liq + Math.hypot(cx - m.px, cy - m.py) / dt / 2500 + 0.04);
-    m.px = cx; m.py = cy; m.ultimo = ahora;
+    if (m.ex >= 0 && ahora - m.ultimo < 120) {
+      const vx = ((ex - m.ex) / 160) * rc.width / dt, vy = ((ey - m.ey) / 90) * rc.height / dt;
+      pintarEstela(m.ex, m.ey, ex, ey, vx, vy);
+    }
+    m.ex = ex; m.ey = ey; m.ultimo = ahora;
     despertar();
   };
+  hero.addEventListener('pointerleave', () => { m.ex = -1; });
   hero.addEventListener('pointermove', (e) => mover(e.clientX, e.clientY), { passive: true });
   hero.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) mover(t.clientX, t.clientY); }, { passive: true });
   hero.addEventListener('pointerdown', (e) => { if (!e.target.closest('a, button')) { iniciarRafaga(3); despertar(); } });
@@ -192,9 +245,17 @@
 
     const desde = ahora - corteEn;
     const g = Math.max(desde < GLITCH ? 1 - desde / GLITCH : 0, enRafaga ? 0.25 : 0);
-    m.liq *= 0.95;
-    // Solo se redibuja con un corte, durante el VHS, mientras ondula el agua o mientras se enciende
-    if (!(sucio || g > 0.01 || m.liq > 0.01 || encendido < 1)) return;
+    // La estela se desvanece hacia "sin intensidad y sin dirección"
+    if (estelaViva > 0) {
+      ectx.fillStyle = 'rgba(0,128,128,0.06)';
+      ectx.fillRect(0, 0, 160, 90);
+      estelaViva *= 0.965;
+      if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 160, 90); }
+      if (gl) { gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, estelaTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, estela); }
+      sucio = true;
+    }
+    // Solo se redibuja con un corte, durante el VHS, mientras vive la estela o mientras se enciende
+    if (!(sucio || g > 0.01 || encendido < 1)) return;
     sucio = false;
 
     const s = Math.max(W / item.w, H / item.h);
@@ -203,8 +264,7 @@
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, item.bloom);
       gl.uniform2f(uni.uRes, W, H);
       gl.uniform2f(uni.uCubre, W / (item.w * s), H / (item.h * s));
-      gl.uniform2f(uni.uMouse, m.ux, m.uy);
-      gl.uniform1f(uni.uLiquido, m.liq);
+      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, estelaTex);
       gl.uniform1f(uni.uGlitch, g);
       gl.uniform1f(uni.uT, (ahora - t0) / 1000);
       gl.uniform1f(uni.uFade, encendido);
