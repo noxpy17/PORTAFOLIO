@@ -63,17 +63,17 @@
       // atrás) y se relaja sola en unos segundos. Del lado de la foto se enfría a azul; hacia donde se
       // estira se calienta a naranja, con el rojo y el azul separados como en una exposición larga.
       // Estela suavizada (9 muestras) para que el estiramiento no quede dentado
-      vec2 ue = vec2(v.x, 1. - v.y), px = vec2(2.2 / 240., 2.2 / 135.);   // misma orientación que el lienzo de la estela
+      vec2 ue = vec2(v.x, 1. - v.y), px = vec2(2.4 / 320., 2.4 / 180.);   // misma orientación que el lienzo de la estela
       vec4 e = vec4(0.);
       for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) e += texture2D(uEstela, ue + vec2(float(i), float(j)) * px);
       e /= 9.;
-      float k = smoothstep(.02, .45, e.r);
+      float k = smoothstep(0., .6, e.r); k = k * k * (3. - 2. * k);   // transición doble: bordes muy suaves
       if (k > .001) {
         vec2 dir = (e.gb - .5) * 2.;
         dir = length(dir) > .02 ? normalize(dir) : vec2(1., 0.);
         // Desplazamiento: cada píxel toma la foto que quedó atrás; como la fuerza varía dentro de la estela,
         // la imagen se estira (no se emborrona). Unas pocas muestras cercanas dan el barrido suave
-        vec2 atras = -dir * vec2(uRes.y / uRes.x, 1.) * .3 * k * k;
+        vec2 atras = -dir * vec2(uRes.y / uRes.x, 1.) * .12 * k * k;   // 40 % del largo anterior
         vec3 suma = vec3(0.);
         for (int i = 0; i < 6; i++) {
           float f = .72 + float(i) / 5. * .28;
@@ -182,9 +182,9 @@
   // Estela del cursor: un lienzo pequeño (se estira en la tarjeta gráfica) donde el cursor pinta manchas suaves.
   // Rojo = intensidad; verde/azul = dirección del movimiento. Cada cuadro se desvanece un poco.
   const estela = document.createElement('canvas');
-  estela.width = 240; estela.height = 135;
+  estela.width = 320; estela.height = 180;
   const ectx = estela.getContext('2d');
-  ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 240, 135);
+  ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 320, 180);
   let estelaTex = null, estelaViva = 0;
   if (gl) {
     estelaTex = gl.createTexture();
@@ -202,10 +202,11 @@
     const fuerza = Math.min(1, v / 900);
     for (let i = 1; i <= pasos; i++) {
       const x = x0 + (x1 - x0) * (i / pasos), y = y0 + (y1 - y0) * (i / pasos);
-      const R = 24 + fuerza * 21;
+      const R = 13 + fuerza * 11;   // 40 % del tamaño anterior
       const gr = ectx.createRadialGradient(x, y, 0, x, y, R);
-      gr.addColorStop(0, `rgba(255,${gC},${bC},${0.6 * fuerza + 0.25})`);
-      gr.addColorStop(1, `rgba(255,${gC},${bC},0)`);
+      const a = 0.6 * fuerza + 0.25;
+      // Caída gaussiana: sin borde marcado donde termina el efecto
+      [[0, 1], [0.25, 0.85], [0.5, 0.5], [0.75, 0.16], [1, 0]].forEach(([t, k]) => gr.addColorStop(t, `rgba(255,${gC},${bC},${(a * k).toFixed(3)})`));
       ectx.fillStyle = gr;
       ectx.fillRect(x - R, y - R, R * 2, R * 2);
     }
@@ -217,10 +218,10 @@
   const mover = (cx, cy) => {
     const r = hero.getBoundingClientRect(), rc = canvas.getBoundingClientRect();
     m.tx = (cx - r.left) / r.width - 0.5; m.ty = (cy - r.top) / r.height - 0.5;
-    const ex = ((cx - rc.left) / rc.width) * 240, ey = ((cy - rc.top) / rc.height) * 135;
+    const ex = ((cx - rc.left) / rc.width) * 320, ey = ((cy - rc.top) / rc.height) * 180;
     const ahora = performance.now(), dt = Math.max((ahora - m.ultimo) / 1000, 0.008);
     if (m.ex >= 0 && ahora - m.ultimo < 120) {
-      const vx = ((ex - m.ex) / 240) * rc.width / dt, vy = ((ey - m.ey) / 135) * rc.height / dt;
+      const vx = ((ex - m.ex) / 320) * rc.width / dt, vy = ((ey - m.ey) / 180) * rc.height / dt;
       pintarEstela(m.ex, m.ey, ex, ey, vx, vy);
     }
     m.ex = ex; m.ey = ey; m.ultimo = ahora;
@@ -254,9 +255,9 @@
     // La estela se desvanece hacia "sin intensidad y sin dirección"
     if (estelaViva > 0) {
       ectx.fillStyle = 'rgba(0,128,128,0.022)';   // se relaja en unos 3 segundos
-      ectx.fillRect(0, 0, 240, 135);
+      ectx.fillRect(0, 0, 320, 180);
       estelaViva *= 0.988;
-      if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 240, 135); }
+      if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 320, 180); }
       if (gl) { gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, estelaTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, estela); }
       sucio = true;
     }
