@@ -209,8 +209,12 @@ body::before {
   display: grid; place-items: center;
   padding-bottom: 16vh;   /* un poco por encima del centro, lejos del titular */
 }
-.hero-marca img {
-  display: block; width: clamp(130px, 21.6vw, 346px); height: auto;
+.hero-marca-luz { position: relative; }
+/* PORTAFOLIO deformado por la estela del cursor (assets/js/montaje.js): mismo brillo que el logo */
+.hero .marca-deformada { position: absolute; inset: auto; z-index: 1; display: none; pointer-events: none; }
+.hero .hero-marca-luz.deformando img { visibility: hidden; }
+.hero .hero-marca-luz.deformando .marca-deformada { display: block; }
+.hero-marca img, .marca-deformada {
   filter:
     drop-shadow(-1.5px 0 0 rgba(223, 0, 247, .55))
     drop-shadow(1.5px 0 0 rgba(0, 220, 255, .55))
@@ -218,6 +222,7 @@ body::before {
     drop-shadow(0 0 14px rgba(255, 255, 255, .28))
     drop-shadow(0 0 42px rgba(160, 170, 255, .25));
 }
+.hero-marca img { display: block; width: clamp(130px, 21.6vw, 346px); height: auto; }
 @media (max-width: 760px) {
   .hero-marca { place-items: start center; padding: 24vh 0 0; }
   .hero-marca img { width: 40.5vw; }

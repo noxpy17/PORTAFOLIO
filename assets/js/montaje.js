@@ -35,16 +35,12 @@
     vec2 cubrir(vec2 q){ return (q - .5) * uCubre + .5; }
     // Cuánto "cálido" tiene un color (rojos, naranjas, pieles): de ahí sale el rojo intenso
     float calor(vec3 c){ return smoothstep(.07, .3, c.r - max(c.g * .85, c.b)); }
-    vec3 gradar(vec3 c){
-      float l = dot(c, vec3(.299, .587, .114));
-      // Base fría: casi sin saturación, con sombras azul petróleo y luces gris azulado
-      vec3 frio = mix(vec3(l), c, .3) * vec3(.8, .9, 1.1) + vec3(.02, .035, .07) * (1. - l);
-      // Cálidos: rojo intenso, casi magenta
-      vec3 rojo = vec3(1., .1, .26) * (.22 + l * 1.25) + vec3(.2, .05, .1) * smoothstep(.6, 1., l);
-      c = mix(frio, rojo, calor(c));
-      c = (c - .5) * 1.14 + .5;                                    // contraste
-      return clamp(c, 0., 1.) * .88;
-    }
+    // Base fría: casi sin saturación, con sombras azul petróleo y luces gris azulado
+    vec3 frioDe(vec3 c){ float l = dot(c, vec3(.299, .587, .114)); return mix(vec3(l), c, .3) * vec3(.8, .9, 1.1) + vec3(.02, .035, .07) * (1. - l); }
+    // Cálidos: rojo casi magenta, suavizado (menos saturado y menos brillante)
+    vec3 rojoDe(vec3 c){ float l = dot(c, vec3(.299, .587, .114)); return vec3(.82, .22, .34) * (.24 + l * 1.05) + vec3(.16, .08, .1) * smoothstep(.6, 1., l); }
+    vec3 acabado(vec3 c){ return clamp((c - .5) * 1.14 + .5, 0., 1.) * .88; }   // contraste
+    vec3 gradar(vec3 c){ return acabado(mix(frioDe(c), rojoDe(c), calor(c) * .75)); }
     void main(){
       vec2 uv = vec2(v.x, 1. - v.y);
       float g = uGlitch;
@@ -61,7 +57,14 @@
       c.r = texture2D(uTex, q + vec2(sangra, 0.)).r;
       c.g = texture2D(uTex, q).g;
       c.b = texture2D(uTex, q - vec2(sangra, 0.)).b;
-      c = gradar(c);
+      // Rojos con motion blur: la capa cálida se promedia en horizontal, como si se moviera; la base fría queda nítida
+      vec3 rs = vec3(0.); float ws = 0.;
+      for (int i = 0; i < 9; i++) {
+        vec3 m = texture2D(uTex, q + (float(i) - 4.) * vec2(.0075, .0012)).rgb;
+        float w = calor(m);
+        rs += rojoDe(m) * w; ws += w;
+      }
+      c = acabado(mix(frioDe(c), rs / max(ws, .001), ws / 9. * .75));
       // Bloom: luces altas pre-desenfocadas, con la misma gradación
       c += gradar(texture2D(uBloom, q).rgb) * .55;
       // Rojos estirados: los cálidos se arrastran hacia un lado, como una foto movida con flash
@@ -70,7 +73,7 @@
         float f = float(i) / 7.;
         vec3 m = texture2D(uTex, cubrir(uv - vec2(.055, .008) * f)).rgb;
         float lm = dot(m, vec3(.299, .587, .114));
-        barrido = max(barrido, vec3(1., .12, .3) * (.25 + lm) * calor(m) * (1. - f) * .85);
+        barrido = max(barrido, vec3(.82, .2, .32) * (.25 + lm) * calor(m) * (1. - f) * .5);
       }
       c = 1. - (1. - c) * (1. - barrido);                          // se suma como luz (screen)
       // Estela del cursor: estira la foto en la dirección del movimiento (los píxeles se arrastran desde
@@ -100,7 +103,7 @@
         // Color de la referencia: azul frío donde apenas se estira, naranja cálido donde más se arrastra
         float l = dot(estirada, vec3(.299, .587, .114));
         vec3 frio = vec3(.12, .42, .95) * (.25 + l * 1.5);
-        vec3 calido = vec3(1., .14, .3) * (.3 + l * 1.7);
+        vec3 calido = vec3(.85, .22, .34) * (.3 + l * 1.6);
         vec3 tono = mix(frio, calido, smoothstep(.25, .9, k));
         c = mix(c, mix(estirada, tono, .42 * smoothstep(.2, .8, k)), k);   // el tono solo donde más se estira: bordes limpios
       }
@@ -236,7 +239,7 @@
     m.tx = (cx - r.left) / r.width - 0.5; m.ty = (cy - r.top) / r.height - 0.5;
     const ex = ((cx - rc.left) / rc.width) * 320, ey = ((cy - rc.top) / rc.height) * 180;
     const ahora = performance.now(), dt = Math.max((ahora - m.ultimo) / 1000, 0.008);
-    if (m.ex >= 0 && ahora - m.ultimo < 120) {
+    if (m.ex >= 0 && ahora - m.ultimo < 250) {   // tolera equipos lentos
       const vx = ((ex - m.ex) / 320) * rc.width / dt, vy = ((ey - m.ey) / 180) * rc.height / dt;
       pintarEstela(m.ex, m.ey, ex, ey, vx, vy);
     }
@@ -275,6 +278,7 @@
       estelaViva *= 0.988;
       if (estelaViva < 0.02) { estelaViva = 0; ectx.fillStyle = 'rgb(0,128,128)'; ectx.fillRect(0, 0, 320, 180); }
       if (gl) { gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, estelaTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, estela); }
+      if (marca) { if (estelaViva > 0) marca.dibujar(canvas); else marca.soltar(); }
       sucio = true;
     }
     // Solo se redibuja con un corte, durante el VHS, mientras vive la estela o mientras se enciende
@@ -301,6 +305,113 @@
       ctx2d.drawImage(item.img, (W - w) / 2, (H - hh) / 2, w, hh);
     }
   };
+
+  // ---------- PORTAFOLIO deformado por la estela ----------
+  // Mientras haya estela, el logo se dibuja en un lienzo propio (WebGL) con el mismo estiramiento; el <img>
+  // se oculta y el lienzo hereda su brillo (filtros CSS) y sus animaciones. Al apagarse la estela vuelve el <img>.
+  const marcaLuz = hero.querySelector('.hero-marca-luz');
+  const marcaImg = marcaLuz && marcaLuz.querySelector('img');
+  const marca = marcaImg && gl ? (() => {
+    const cv = document.createElement('canvas');
+    cv.className = 'marca-deformada';
+    cv.setAttribute('aria-hidden', 'true');
+    marcaLuz.append(cv);
+    const lg = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
+    if (!lg) { cv.remove(); return null; }
+    const FRAG_M = `
+      precision mediump float;
+      varying vec2 v;
+      uniform sampler2D uLogo, uEstela;
+      uniform vec4 uIn, uMap;     // uIn: rectángulo del logo dentro del lienzo; uMap: lienzo → coordenadas de la estela
+      uniform vec2 uConv, uAsp;   // de desplazamiento del montaje a desplazamiento del lienzo; proporción del montaje
+      vec4 logo(vec2 q){ vec2 t = (q - uIn.xy) / uIn.zw; return (t.x < 0. || t.y < 0. || t.x > 1. || t.y > 1.) ? vec4(0.) : texture2D(uLogo, t); }
+      void main(){
+        vec2 u = vec2(v.x, 1. - v.y);
+        vec2 ue = uMap.xy + u * uMap.zw, px = vec2(2.4 / 320., 2.4 / 180.);
+        vec4 e = vec4(0.);
+        for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) e += texture2D(uEstela, ue + vec2(float(i), float(j)) * px);
+        e /= 9.;
+        float k = smoothstep(0., .6, e.r); k = k * k * (3. - 2. * k);
+        vec2 dir = (e.gb - .5) * 2.;
+        dir = length(dir) > .02 ? normalize(dir) : vec2(1., 0.);
+        vec2 atras = -dir * uAsp * .12 * k * k * uConv;
+        vec4 suma = vec4(0.);
+        for (int i = 0; i < 6; i++) {
+          float f = .72 + float(i) / 5. * .28;
+          vec2 o = atras * f;
+          vec4 a = logo(u + o * 1.03), b = logo(u + o), c = logo(u + o * .97);
+          suma += vec4(a.r, b.g, c.b, max(a.a, max(b.a, c.a)));
+        }
+        gl_FragColor = suma / 6.;
+      }`;
+    const sh = (tipo, src) => { const x = lg.createShader(tipo); lg.shaderSource(x, src); lg.compileShader(x); return x; };
+    const pr = lg.createProgram();
+    lg.attachShader(pr, sh(lg.VERTEX_SHADER, VERT));
+    lg.attachShader(pr, sh(lg.FRAGMENT_SHADER, FRAG_M));
+    lg.linkProgram(pr); lg.useProgram(pr);
+    const bf = lg.createBuffer();
+    lg.bindBuffer(lg.ARRAY_BUFFER, bf);
+    lg.bufferData(lg.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), lg.STATIC_DRAW);
+    const lc = lg.getAttribLocation(pr, 'p');
+    lg.enableVertexAttribArray(lc); lg.vertexAttribPointer(lc, 2, lg.FLOAT, false, 0, 0);
+    const u = {};
+    ['uLogo', 'uEstela', 'uIn', 'uMap', 'uConv', 'uAsp'].forEach((n) => { u[n] = lg.getUniformLocation(pr, n); });
+    lg.uniform1i(u.uLogo, 0); lg.uniform1i(u.uEstela, 1);
+    lg.pixelStorei(lg.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    const nueva = () => {
+      const t = lg.createTexture();
+      lg.bindTexture(lg.TEXTURE_2D, t);
+      lg.texParameteri(lg.TEXTURE_2D, lg.TEXTURE_MIN_FILTER, lg.LINEAR);
+      lg.texParameteri(lg.TEXTURE_2D, lg.TEXTURE_MAG_FILTER, lg.LINEAR);
+      lg.texParameteri(lg.TEXTURE_2D, lg.TEXTURE_WRAP_S, lg.CLAMP_TO_EDGE);
+      lg.texParameteri(lg.TEXTURE_2D, lg.TEXTURE_WRAP_T, lg.CLAMP_TO_EDGE);
+      return t;
+    };
+    const tLogo = nueva(), tEstela = nueva();
+    let listo = false, ancho = 0;
+    // El logo se rasteriza a la resolución de la pantalla cada vez que cambia su tamaño
+    const rasterizar = () => {
+      const r = marcaImg.getBoundingClientRect();
+      if (!r.width || !marcaImg.complete) return false;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (Math.round(r.width * dpr) === ancho) return true;
+      ancho = Math.round(r.width * dpr);
+      const c = document.createElement('canvas');
+      c.width = ancho; c.height = Math.round(r.height * dpr);
+      c.getContext('2d').drawImage(marcaImg, 0, 0, c.width, c.height);
+      lg.activeTexture(lg.TEXTURE0); lg.bindTexture(lg.TEXTURE_2D, tLogo);
+      lg.texImage2D(lg.TEXTURE_2D, 0, lg.RGBA, lg.RGBA, lg.UNSIGNED_BYTE, c);
+      return true;
+    };
+    return {
+      dibujar(montaje) {
+        if (!rasterizar()) return;
+        const r = marcaImg.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // Margen alrededor del logo para que el estiramiento no se corte
+        const pad = Math.round(Math.max(r.width, r.height) * 0.45);
+        const w = r.width + pad * 2, h = r.height + pad * 2;
+        if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+        cv.style.cssText = `left:${-pad}px;top:${-pad}px;width:${w}px;height:${h}px`;
+        lg.viewport(0, 0, cv.width, cv.height);
+        const cr = { x: r.left - pad, y: r.top - pad, w, h };
+        const m = montaje.getBoundingClientRect();
+        lg.uniform4f(u.uIn, pad / w, pad / h, r.width / w, r.height / h);
+        lg.uniform4f(u.uMap, (cr.x - m.left) / m.width, (cr.y - m.top) / m.height, w / m.width, h / m.height);
+        lg.uniform2f(u.uConv, m.width / w, m.height / h);
+        lg.uniform2f(u.uAsp, m.height / m.width, 1);
+        lg.activeTexture(lg.TEXTURE0); lg.bindTexture(lg.TEXTURE_2D, tLogo);
+        lg.activeTexture(lg.TEXTURE1); lg.bindTexture(lg.TEXTURE_2D, tEstela);
+        lg.pixelStorei(lg.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        lg.texImage2D(lg.TEXTURE_2D, 0, lg.RGB, lg.RGB, lg.UNSIGNED_BYTE, estela);
+        lg.pixelStorei(lg.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        lg.clearColor(0, 0, 0, 0); lg.clear(lg.COLOR_BUFFER_BIT);
+        lg.drawArrays(lg.TRIANGLE_STRIP, 0, 4);
+        if (!listo) { listo = true; }
+        marcaLuz.classList.add('deformando');
+      },
+      soltar() { marcaLuz.classList.remove('deformando'); },
+    };
+  })() : null;
 
   let raf = 0, visible = true;
   const cuadro = (ahora) => {
