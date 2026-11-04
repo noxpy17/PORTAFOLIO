@@ -10,9 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;600;700;800;900&family=Maven+Pro:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="assets/css/styles.css?v=202611022332">
-<link rel="preload" as="image" href="assets/img/portada-1920.webp" imagesrcset="assets/img/portada-1280.webp 1280w, assets/img/portada-1920.webp 1920w" imagesizes="100vw" media="(min-width: 761px)">
-<link rel="preload" as="image" href="assets/img/portada-movil.webp" media="(max-width: 760px)">
+<link rel="stylesheet" href="assets/css/styles.css?v=202611041514">
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
@@ -31,10 +29,7 @@
 
 <main id="inicio">
   <section class="hero" aria-labelledby="hero-titulo">
-    <picture class="hero-fondo" aria-hidden="true">
-      <source media="(max-width: 760px)" srcset="assets/img/portada-movil.webp">
-      <img src="assets/img/portada-1920.webp" srcset="assets/img/portada-1280.webp 1280w, assets/img/portada-1920.webp 1920w" sizes="100vw" alt="" width="1920" height="1011" fetchpriority="high" decoding="async">
-    </picture>
+    <canvas class="hero-brasas" aria-hidden="true"></canvas>
     <div class="hero-grain" aria-hidden="true"></div>
     <div class="hero-marca">
       <div class="hero-marca-luz"><img src="assets/img/portafolio.svg" alt="Portafolio" width="439" height="137" decoding="async"></div>
@@ -525,8 +520,9 @@
   </div>
 </footer>
 
-<script src="assets/vendor/anime.umd.min.js?v=202611022332"></script>
-<script src="assets/js/main.js?v=202611022332"></script>
-<script src="assets/js/intro.js?v=202611022332"></script>
+<script src="assets/vendor/anime.umd.min.js?v=202611041514"></script>
+<script src="assets/js/main.js?v=202611041514"></script>
+<script src="assets/js/brasas.js?v=202611041514"></script>
+<script src="assets/js/intro.js?v=202611041514"></script>
 </body>
 </html>

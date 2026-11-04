@@ -182,25 +182,11 @@ body::before {
     radial-gradient(55% 60% at 70% 42%, color-mix(in srgb, var(--violeta) 30%, transparent), transparent 72%);
 }
 .hero.has-webgl::before { display: none; }
-/* Portada fija: un cuadro de la escena de bruma con el logo; respira muy despacio */
-.hero-fondo { position: absolute; inset: 0; z-index: -1; display: block; }
-.hero-fondo img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; }
-@media (prefers-reduced-motion: no-preference) {
-  .hero-fondo img { animation: respira 24s ease-in-out infinite alternate; transform-origin: 70% 40%; }
-  @keyframes respira { from { transform: scale(1); } to { transform: scale(1.06) translate3d(-1%, -.5%, 0); } }
-}
-@media (max-width: 760px) {
-  /* En celular la imagen ocupa el ancho (el logo se ve completo) y se funde con el negro hacia abajo */
-  .hero-fondo img { height: auto; object-fit: initial; }
-  .hero-fondo::after {
-    content: ""; position: absolute; left: 0; right: 0; top: 55vw; bottom: 0;
-    background: linear-gradient(to bottom, transparent, var(--negro) 70%);
-  }
-}
 .hero canvas {
   position: absolute; inset: 0; z-index: -1;
-  width: 100%; height: 100%; display: block;
+  width: 100%; height: 100%; display: block; pointer-events: none;
 }
+/* Fondo de brasas (assets/js/brasas.js): transparente, sobre el halo neón de .hero::before */
 /* Título PORTAFOLIO en el centro del banner, con la misma luz que los textos:
    desfase RGB (#df00f7 / cian), halation cálida y bloom amplio */
 .hero-marca {

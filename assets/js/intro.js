@@ -36,6 +36,7 @@
   const arrancarN = () => {
     delete hero.dataset.esperaN;
     hero.classList.add('n-viva');   // arranca también el halo pre-calculado
+    setTimeout(() => hero.dispatchEvent(new CustomEvent('noxpy:chispa')), 600);   // estallido: brasas desde la llama (brasas.js)
     if (!llama || !llama.unpauseAnimations) return;
     llama.setCurrentTime(0);
     animacionesN.forEach((a) => { a.currentTime = 0; a.play(); });
