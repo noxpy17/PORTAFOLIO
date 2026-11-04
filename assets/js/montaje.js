@@ -1,9 +1,10 @@
 // Fondo de la portada: montaje de proyectos del portafolio, dibujado con WebGL en la tarjeta gráfica.
 // - Ritmo: ráfagas de cortes rápidos y, entre ráfaga y ráfaga, una imagen que se sostiene con un empuje
 //   lento de cámara (el empuje y el paralaje los hace CSS, sin redibujar).
-// - Gradación teal & orange: sombras verde azulado, luces y pieles naranja, con bloom en las luces altas.
+// - Gradación fría con rojos intensos: base gris azulada; los tonos cálidos (pieles, ropa, luces) se vuelven
+//   rojo casi magenta y se estiran hacia un lado; desfase RGB leve, grano de película animado y bloom.
 // - Cortes con glitch VHS: líneas de barrido, temblor vertical, banda de tracking, sangrado de color y ruido.
-// - Hover: el cursor estira la imagen en la dirección del movimiento (azul del lado de la foto, naranja
+// - Hover: el cursor estira la imagen en la dirección del movimiento (azul del lado de la foto, rojo
 //   hacia donde se estira) y la imagen vuelve sola a su lugar en unos segundos.
 // Sin WebGL, las fotos se muestran con un oscurecido simple.
 (() => {
@@ -32,13 +33,17 @@
     float h(float n){ return fract(sin(n) * 43758.5453); }
     float h2(vec2 q){ return fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453); }
     vec2 cubrir(vec2 q){ return (q - .5) * uCubre + .5; }
+    // Cuánto "cálido" tiene un color (rojos, naranjas, pieles): de ahí sale el rojo intenso
+    float calor(vec3 c){ return smoothstep(.07, .3, c.r - max(c.g * .85, c.b)); }
     vec3 gradar(vec3 c){
       float l = dot(c, vec3(.299, .587, .114));
-      c = mix(vec3(l), c, .82);                                   // un poco menos de saturación de base
-      vec3 teal = vec3(.38, .86, 1.0), naranja = vec3(1.22, .78, .42);
-      c *= mix(teal, naranja, smoothstep(.18, .72, l));           // teal en sombras, naranja en luces
-      c = (c - .5) * 1.12 + .5;                                    // contraste
-      return clamp(c, 0., 1.) * .86;
+      // Base fría: casi sin saturación, con sombras azul petróleo y luces gris azulado
+      vec3 frio = mix(vec3(l), c, .3) * vec3(.8, .9, 1.1) + vec3(.02, .035, .07) * (1. - l);
+      // Cálidos: rojo intenso, casi magenta
+      vec3 rojo = vec3(1., .1, .26) * (.22 + l * 1.25) + vec3(.2, .05, .1) * smoothstep(.6, 1., l);
+      c = mix(frio, rojo, calor(c));
+      c = (c - .5) * 1.14 + .5;                                    // contraste
+      return clamp(c, 0., 1.) * .88;
     }
     void main(){
       vec2 uv = vec2(v.x, 1. - v.y);
@@ -50,7 +55,7 @@
       float banda = fract(uT * .9);
       float enBanda = smoothstep(.06, 0., abs(uv.y - banda)) * g;
       uv.x += enBanda * .035 * sin(uv.y * 400. + uT * 40.);
-      float sangra = .004 * g;
+      float sangra = .0015 + .004 * g;                            // desfase RGB leve siempre, más en los cortes
       vec2 q = cubrir(uv);
       vec3 c;
       c.r = texture2D(uTex, q + vec2(sangra, 0.)).r;
@@ -59,6 +64,15 @@
       c = gradar(c);
       // Bloom: luces altas pre-desenfocadas, con la misma gradación
       c += gradar(texture2D(uBloom, q).rgb) * .55;
+      // Rojos estirados: los cálidos se arrastran hacia un lado, como una foto movida con flash
+      vec3 barrido = vec3(0.);
+      for (int i = 1; i <= 7; i++) {
+        float f = float(i) / 7.;
+        vec3 m = texture2D(uTex, cubrir(uv - vec2(.055, .008) * f)).rgb;
+        float lm = dot(m, vec3(.299, .587, .114));
+        barrido = max(barrido, vec3(1., .12, .3) * (.25 + lm) * calor(m) * (1. - f) * .85);
+      }
+      c = 1. - (1. - c) * (1. - barrido);                          // se suma como luz (screen)
       // Estela del cursor: estira la foto en la dirección del movimiento (los píxeles se arrastran desde
       // atrás) y se relaja sola en unos segundos. Del lado de la foto se enfría a azul; hacia donde se
       // estira se calienta a naranja, con el rojo y el azul separados como en una exposición larga.
@@ -85,14 +99,15 @@
         vec3 estirada = gradar(suma / 6.);
         // Color de la referencia: azul frío donde apenas se estira, naranja cálido donde más se arrastra
         float l = dot(estirada, vec3(.299, .587, .114));
-        vec3 frio = vec3(.1, .5, 1.) * (.25 + l * 1.5);
-        vec3 calido = vec3(1., .52, .14) * (.25 + l * 1.7);
+        vec3 frio = vec3(.12, .42, .95) * (.25 + l * 1.5);
+        vec3 calido = vec3(1., .14, .3) * (.3 + l * 1.7);
         vec3 tono = mix(frio, calido, smoothstep(.25, .9, k));
         c = mix(c, mix(estirada, tono, .42 * smoothstep(.2, .8, k)), k);   // el tono solo donde más se estira: bordes limpios
       }
       // VHS: líneas de barrido (siempre, muy suaves), ruido y desteñido en la banda
       c *= .965 + .035 * sin(v.y * uRes.y * 1.6);
-      c += (h2(v * uRes + uT) - .5) * (.03 + .16 * g);
+      // Grano de película: grueso (2 px) y animado; más fuerte en los cortes
+      c += (h2(floor(v * uRes / 1.6) + fract(uT * 7.3) * 91.) - .5) * (.085 + .14 * g);
       c = mix(c, vec3(dot(c, vec3(.33))) * 1.15, enBanda * .6);
       gl_FragColor = vec4(c * uFade, 1.);
     }`;
@@ -151,6 +166,7 @@
   };
 
   let W = 0, H = 0;
+  let ultimoGrano = 0;
   let actual = 0, corteEn = -1e9, cortesRestantes = 0, proximoCorte = 0, sostenDesde = 0, encendido = quieto ? 1 : 0, t0 = 0, sucio = true;
 
   // El lienzo trabaja a la resolución de las fotos (máx. 1280 px de ancho); la tarjeta gráfica lo estira
@@ -262,6 +278,8 @@
       sucio = true;
     }
     // Solo se redibuja con un corte, durante el VHS, mientras vive la estela o mientras se enciende
+    // El grano se renueva unas 12 veces por segundo, como película
+    if (ahora - ultimoGrano > 83) { ultimoGrano = ahora; sucio = true; }
     if (!(sucio || g > 0.01 || encendido < 1)) return;
     sucio = false;
 
