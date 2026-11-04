@@ -1,7 +1,8 @@
 // Fondo de la portada: montaje de proyectos del portafolio. Ráfagas de cortes rápidos con glitch
 // (franjas desplazadas y desfase RGB #df00f7 / cian) y, entre ráfaga y ráfaga, una imagen que se
-// sostiene con un empuje lento de cámara. Todo en duotono de la marca: negro → violeta → cian → blanco.
-// El mouse mueve la imagen (paralaje) y su velocidad aumenta el glitch; un clic salta al siguiente corte.
+// sostiene con un empuje lento de cámara. Las fotos van apagadas (semidesaturadas, con un velo violeta
+// en las sombras y un toque cian en las luces); al pasar el cursor, una linterna revela la foto a todo color.
+// El mouse también mueve la imagen (paralaje); un clic lanza una ráfaga.
 (() => {
   const hero = document.querySelector('.hero');
   const canvas = hero && hero.querySelector('.hero-montaje');
@@ -25,7 +26,8 @@
     const f = (t - t0) / (t1 - t0);
     for (let j = 0; j < 3; j++) tabla[i * 3 + j] = c0[j] + (c1[j] - c0[j]) * f;
   }
-  const duotono = (img) => {
+  // Tono sutil: la foto conserva parte de su color, se desatura y se oscurece, y toma un poco del duotono
+  const tono = (img) => {
     const c = document.createElement('canvas');
     c.width = img.naturalWidth; c.height = img.naturalHeight;
     const x = c.getContext('2d');
@@ -35,8 +37,11 @@
       // Luminancia con algo más de contraste
       let l = (p[i] * 0.299 + p[i + 1] * 0.587 + p[i + 2] * 0.114) / 255;
       l = Math.min(1, Math.max(0, (l - 0.5) * 1.25 + 0.5));
-      const k = Math.round(l * 255) * 3;
-      p[i] = tabla[k]; p[i + 1] = tabla[k + 1]; p[i + 2] = tabla[k + 2];
+      const k = Math.round(l * 255) * 3, gris = l * 255;
+      for (let j = 0; j < 3; j++) {
+        const desat = p[i + j] * 0.45 + gris * 0.55;
+        p[i + j] = (desat * 0.72 + tabla[k + j] * 0.28) * 0.82;
+      }
     }
     x.putImageData(d, 0, 0);
     return c;
@@ -49,7 +54,7 @@
     const img = new Image();
     img.decoding = 'async';
     img.onload = () => {
-      listas.push({ i, lienzo: duotono(img) });
+      listas.push({ i, lienzo: tono(img), color: img });
       listas.sort((a, b) => a.i - b.i);
       if (listas.length === 1) { medir(); despertar(); }
     };
@@ -84,16 +89,28 @@
 
   // Mouse / dedo: paralaje suave y velocidad que alimenta el glitch
   const m = { x: 0, y: 0, tx: 0, ty: 0, vel: 0, ultimo: 0, px: 0, py: 0 };
+  // Linterna: posición en píxeles del lienzo (con inercia) y opacidad (aparece y se apaga suave)
+  const luz = { x: 0, y: 0, tx: 0, ty: 0, a: 0, ta: 0 };
+  const apuntar = (cx, cy) => {
+    const r = canvas.getBoundingClientRect();
+    luz.tx = ((cx - r.left) / r.width) * canvas.width;
+    luz.ty = ((cy - r.top) / r.height) * canvas.height;
+    if (luz.a < 0.01) { luz.x = luz.tx; luz.y = luz.ty; }
+    luz.ta = 1;
+  };
   const mover = (cx, cy) => {
     const r = hero.getBoundingClientRect();
     const nx = (cx - r.left) / r.width - 0.5, ny = (cy - r.top) / r.height - 0.5;
     const ahora = performance.now(), dt = Math.max((ahora - m.ultimo) / 1000, 0.008);
     m.vel = Math.min(1, m.vel + Math.hypot(cx - m.px, cy - m.py) / dt / 6000);
     m.px = cx; m.py = cy; m.ultimo = ahora; m.tx = nx; m.ty = ny;
+    apuntar(cx, cy);
     despertar();
   };
   hero.addEventListener('pointermove', (e) => mover(e.clientX, e.clientY), { passive: true });
   hero.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) mover(t.clientX, t.clientY); }, { passive: true });
+  hero.addEventListener('pointerleave', () => { luz.ta = 0; despertar(); });
+  hero.addEventListener('touchend', () => { luz.ta = 0; despertar(); }, { passive: true });
   hero.addEventListener('pointerdown', (e) => { if (!e.target.closest('a, button')) { iniciarRafaga(3); despertar(); } });
   // La N se enciende (ver intro.js): ráfaga
   hero.addEventListener('noxpy:chispa', () => { iniciarRafaga(RAFAGA.cortes); despertar(); });
@@ -130,10 +147,13 @@
     canvas.style.transform = `translate3d(${(-m.x * 26).toFixed(1)}px, ${(-m.y * 18).toFixed(1)}px, 0) scale(${empuje.toFixed(4)})`;
     // Solo se redibuja con un corte nuevo, mientras dura el glitch o si el mouse se mueve rápido
     const desde0 = ahora - corteEn;
-    const necesita = c !== ultimoDibujo || desde0 < GLITCH + 40 || m.vel > 0.02 || encendido < 1 || sucio;
+    luz.x += (luz.tx - luz.x) * 0.18; luz.y += (luz.ty - luz.y) * 0.18;
+    luz.a += (luz.ta - luz.a) * 0.12;
+    const luzMoviendo = (luz.a > 0.01 && Math.hypot(luz.tx - luz.x, luz.ty - luz.y) > 0.5) || Math.abs(luz.ta - luz.a) > 0.01;
+    const necesita = c !== ultimoDibujo || desde0 < GLITCH + 40 || m.vel > 0.02 || encendido < 1 || sucio || luzMoviendo;
     if (!necesita) return;
     // Durante el glitch basta con 30 cuadros por segundo (y se siente más entrecortado)
-    if (c === ultimoDibujo && !sucio && (cuadros++ & 1)) return;
+    if (c === ultimoDibujo && !sucio && !luzMoviendo && (cuadros++ & 1)) return;
     ultimoDibujo = c; sucio = false;
 
     ctx.globalCompositeOperation = 'source-over';
@@ -145,7 +165,7 @@
 
     // Glitch justo después de cada corte, y más fuerte si el mouse se mueve rápido
     const desde = ahora - corteEn;
-    const g = Math.max(desde < GLITCH ? 1 - desde / GLITCH : 0, m.vel * 0.8);
+    const g = Math.max(desde < GLITCH ? 1 - desde / GLITCH : 0, m.vel * 0.4);
     if (g > 0.02) {
       // Desfase RGB: copias teñidas desplazadas a cada lado
       const off = (6 + 22 * g) * escala;
@@ -162,8 +182,30 @@
         ctx.drawImage(canvas, 0, y, cw, h, corrimiento, y, cw, h);
       }
     }
+    // Linterna: la foto a todo color dentro de un círculo de bordes suaves que sigue al cursor
+    if (luz.a > 0.01) {
+      const item = imgs[actual % imgs.length];
+      const R = Math.round(Math.min(cw, ch) * 0.24);
+      if (lente.width !== R * 2) { lente.width = lente.height = R * 2; }
+      const s = Math.max(cw / item.color.naturalWidth, ch / item.color.naturalHeight);
+      const w = item.color.naturalWidth * s, h = item.color.naturalHeight * s;
+      lctx.globalCompositeOperation = 'source-over';
+      lctx.clearRect(0, 0, R * 2, R * 2);
+      lctx.drawImage(item.color, (cw - w) / 2 - (luz.x - R), (ch - h) / 2 - (luz.y - R), w, h);
+      lctx.globalCompositeOperation = 'destination-in';
+      const gr = lctx.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.55, 'rgba(0,0,0,.9)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      lctx.fillStyle = gr;
+      lctx.fillRect(0, 0, R * 2, R * 2);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = luz.a * encendido;
+      ctx.drawImage(lente, luz.x - R, luz.y - R);
+    }
+    ctx.globalAlpha = 1;
     m.vel *= 0.9;
   };
+  const lente = document.createElement('canvas');
+  const lctx = lente.getContext('2d');
 
   let raf = 0, visible = true;
   const cuadro = (ahora) => {
