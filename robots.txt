@@ -1,0 +1,6 @@
+# NOXPY · Cristian Patiño
+# Todo el sitio es público: buscadores y asistentes de IA pueden leerlo y citarlo.
+User-agent: *
+Allow: /
+
+Sitemap: https://noxpy.com/sitemap.xml

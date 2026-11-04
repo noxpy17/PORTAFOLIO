@@ -1,10 +1,27 @@
-# NOXPY: compresión y caché para que el sitio cargue rápido en cPanel (Apache)
+# NOXPY: compresión, caché, redirecciones y página 404 (Hostinger / Apache)
 
 # La portada es index.html (aunque queden archivos de WordPress en la carpeta)
 DirectoryIndex index.html
+Options -Indexes
+
+# Una sola dirección para Google: www.noxpy.com pasa a https://noxpy.com
+# (http → https ya lo hace Hostinger; repetirlo aquí detrás de su CDN puede crear un bucle)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^www\.noxpy\.com$ [NC]
+  RewriteRule ^(.*)$ https://noxpy.com/$1 [R=301,L]
+  # Enlaces viejos a /index.html y /proyectos/index.html: a la dirección limpia
+  RewriteCond %{THE_REQUEST} \s/+(.*/)?index\.html[\s?] [NC]
+  RewriteRule ^(.*/)?index\.html$ https://noxpy.com/$1 [R=301,L]
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+# Archivos ocultos (.git, .env…) nunca se sirven
+RedirectMatch 404 /\.(?!well-known)
 
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json image/svg+xml
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json application/manifest+json image/svg+xml text/plain application/xml text/xml
 </IfModule>
 
 <IfModule mod_expires.c>
@@ -15,8 +32,22 @@ DirectoryIndex index.html
   ExpiresByType text/javascript "access plus 1 month"
   ExpiresByType image/webp "access plus 6 months"
   ExpiresByType image/png "access plus 6 months"
+  ExpiresByType image/jpeg "access plus 6 months"
   ExpiresByType image/svg+xml "access plus 6 months"
+  ExpiresByType image/x-icon "access plus 6 months"
+  ExpiresByType application/manifest+json "access plus 1 week"
+  ExpiresByType text/plain "access plus 1 day"
+  ExpiresByType application/xml "access plus 1 day"
 </IfModule>
 
-# Los archivos de JavaScript deben servirse como JavaScript
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Tipos correctos
 AddType application/javascript .js .mjs
+AddType application/manifest+json .webmanifest
+AddType image/x-icon .ico
+AddCharset utf-8 .html .css .js .txt .xml .webmanifest

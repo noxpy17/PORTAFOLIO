@@ -21,7 +21,8 @@
     ctx.putImageData(img, 0, 0);
     grain.style.backgroundImage = `url(${c.toDataURL()})`;
     document.querySelectorAll('.hero-grain').forEach((g) => { g.style.backgroundImage = grain.style.backgroundImage; });
-    if (!reduceMotion) {
+    // En celulares el grano queda quieto: moverlo obliga a mantener una capa enorme en la tarjeta gráfica
+    if (!reduceMotion && !window.matchMedia('(pointer: coarse)').matches) {
       setInterval(() => {
         grain.style.transform = `translate3d(${(Math.random() * 180 - 90).toFixed(0)}px, ${(Math.random() * 180 - 90).toFixed(0)}px, 0)`;
       }, 90);
@@ -194,8 +195,11 @@
 
     // Solo lo que todavía no está en pantalla; lo visible al cargar se queda quieto
     const fold = window.innerHeight;
-    document.querySelectorAll('.card figure, .gallery figure, .case-cover, .halo, .about-foto').forEach((el) => {
-      if (el.getBoundingClientRect().top <= fold) return;
+    // Primero se miden todas las posiciones y después se cambia el DOM: medir y cambiar intercalado obliga
+    // al navegador a recalcular la página en cada vuelta (en celular eso trababa la carga)
+    const porRevelar = [...document.querySelectorAll('.card figure, .gallery figure, .case-cover, .halo, .about-foto')]
+      .filter((el) => el.getBoundingClientRect().top > fold);
+    porRevelar.forEach((el) => {
       if (el.matches('.card figure')) {
         const img = el.querySelector('img');
         const bn = img.cloneNode();
@@ -220,6 +224,7 @@
     const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
     const stack = document.querySelector('.feature-stack');
     const carrusel = !reduceMotion && !!stack;
+    const tactil = window.matchMedia('(pointer: coarse)').matches;
 
     // Penumbra de las carpetas que no están al frente
     features.forEach((f) => {
@@ -340,6 +345,9 @@
         // Lo que ya quedó tapado del todo no se toca
         const lejos = o < -1.4 || o > 1.4;
         if (lejos && p.lejos) return;
+        // En pantallas táctiles, lo que está tapado del todo (o aún no entra) deja de dibujarse: cada carpeta
+        // ocupa varias capas del tamaño de la pantalla y en celular eso agota la memoria de la tarjeta gráfica
+        if (tactil && lejos !== p.lejos) p.f.style.visibility = lejos ? 'hidden' : '';
         p.lejos = lejos;
         // e: cuánto llegó la carpeta al frente · c: cuánto la tapó la siguiente
         const e = 1 - clamp(o);
@@ -566,8 +574,12 @@
   const hablemos = document.querySelector('.contact h2 em');
   if (hablemos && A && 'IntersectionObserver' in window) {
     const texto = hablemos.textContent;
-    hablemos.setAttribute('aria-label', texto);
     hablemos.textContent = '';
+    // Texto completo para lectores de pantalla (un <em> no admite aria-label); las letras animadas se ocultan
+    const leer = document.createElement('span');
+    leer.className = 'sr-only';
+    leer.textContent = texto;
+    hablemos.append(leer);
     const letras = [...texto].map((ch) => {
       const s = document.createElement('span');
       s.className = 'tch';
